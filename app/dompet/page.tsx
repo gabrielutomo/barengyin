@@ -255,17 +255,17 @@ export default function DompetPage() {
         </header>
 
         {/* MAIN BODY */}
-        <main className="pt-24 pb-16 px-6 sm:px-8 max-w-7xl mx-auto space-y-8">
+        <main className="pt-20 sm:pt-24 pb-20 md:pb-16 px-3 sm:px-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
           {/* 1. HERO BALANCE BANNER */}
-          <div className="bg-surface-container-lowest border-[4px] border-black shadow-[6px_6px_0px_#000] rounded-xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2">
+          <div className="bg-surface-container-lowest border-[3px] sm:border-[4px] border-black shadow-[4px_4px_0px_#000] sm:shadow-[6px_6px_0px_#000] rounded-xl p-4 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+            <div className="space-y-1.5 sm:space-y-2">
               <span className="font-label-badge text-xs uppercase font-black text-on-surface-variant">
                 SALDO KAS BERSAMA SAAT INI
               </span>
               <div className="flex items-baseline gap-2">
-                <span className="font-headline-sm text-2xl font-bold">Rp</span>
+                <span className="text-xl sm:text-2xl font-bold">Rp</span>
                 <span
-                  className={`font-numeric-stat text-4xl sm:text-5xl font-black ${
+                  className={`font-numeric-stat text-3xl sm:text-5xl font-black ${
                     currentBalance >= 0 ? "text-on-surface" : "text-[#ba1a1a]"
                   }`}
                 >
@@ -277,11 +277,11 @@ export default function DompetPage() {
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0">
               <button
                 type="button"
                 onClick={() => setShowIncomeModal(true)}
-                className="px-5 py-3 bg-[#D4F34A] hover:bg-[#c2e439] text-black border-[3px] border-black rounded font-headline-sm uppercase font-black text-xs shadow-[3px_3px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-4 py-2.5 bg-[#D4F34A] hover:bg-[#c2e439] text-black border-2 sm:border-[3px] border-black rounded uppercase font-black text-xs shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined text-lg">add_circle</span>
                 <span>+ Masukkan Gaji / Top-up</span>
@@ -289,7 +289,7 @@ export default function DompetPage() {
 
               <Link
                 href="/transaksi"
-                className="px-5 py-3 bg-white hover:bg-slate-100 text-black border-[3px] border-black rounded font-headline-sm uppercase font-black text-xs shadow-[3px_3px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-4 py-2.5 bg-white hover:bg-slate-100 text-black border-2 sm:border-[3px] border-black rounded uppercase font-black text-xs shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined text-lg">shopping_cart</span>
                 <span>Catat Pengeluaran</span>
@@ -409,42 +409,39 @@ export default function DompetPage() {
                   return (
                     <div
                       key={tx.id}
-                      className="p-4 sm:p-5 hover:bg-surface-container-low/30 transition-colors flex items-center justify-between gap-4"
+                      className="p-3 sm:p-4 hover:bg-surface-container-low/30 transition-colors flex items-center justify-between gap-3"
                     >
-                      <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
                         <div
-                          className={`w-11 h-11 rounded-lg border-2 border-black flex items-center justify-center shrink-0 shadow-[2px_2px_0px_#000] ${
+                          className={`w-9 h-9 sm:w-11 sm:h-11 rounded-lg border-2 border-black flex items-center justify-center shrink-0 shadow-[1.5px_1.5px_0px_#000] sm:shadow-[2px_2px_0px_#000] ${
                             isIncome ? "bg-[#D4F34A]" : "bg-secondary-container"
                           }`}
                         >
-                          <span className="material-symbols-outlined text-2xl">
+                          <span className="material-symbols-outlined text-xl sm:text-2xl">
                             {isIncome ? "trending_up" : "shopping_cart"}
                           </span>
                         </div>
 
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="font-headline-sm text-sm sm:text-base uppercase font-black truncate">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <h4 className="text-xs sm:text-base uppercase font-black truncate leading-tight">
                               {tx.title}
                             </h4>
                             <span
-                              className={`font-label-badge text-[10px] uppercase font-black px-1.5 py-0.5 border border-black rounded ${
+                              className={`text-[9px] sm:text-[10px] uppercase font-black px-1.5 py-0.5 border border-black rounded leading-none ${
                                 isIncome ? "bg-[#D4F34A]" : "bg-white"
                               }`}
                             >
-                              {isIncome ? "Kas Masuk / Gaji" : "Pengeluaran"}
+                              {isIncome ? "Kas Masuk" : "Pengeluaran"}
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-2 text-xs text-on-surface-variant font-bold mt-1 flex-wrap">
-                            <span>{isIncome ? "Disetor oleh:" : "Dibayar oleh:"} <strong>{tx.paid_by || "Saya"}</strong></span>
-                            <span>•</span>
+                          <div className="text-[11px] sm:text-xs text-on-surface-variant font-bold mt-1 truncate">
+                            <span>{isIncome ? "Disetor:" : "Oleh:"} {tx.paid_by || "Saya"}</span>
+                            <span> • </span>
                             <span>{tx.transaction_date}</span>
                             {tx.description && (
-                              <>
-                                <span>•</span>
-                                <span className="italic">{tx.description}</span>
-                              </>
+                              <span> • {tx.description}</span>
                             )}
                           </div>
                         </div>
@@ -452,13 +449,13 @@ export default function DompetPage() {
 
                       <div className="text-right shrink-0">
                         <div
-                          className={`font-numeric-stat text-lg sm:text-xl font-black ${
+                          className={`font-numeric-stat text-xs sm:text-lg font-black leading-tight ${
                             isIncome ? "text-[#15803d]" : "text-[#ba1a1a]"
                           }`}
                         >
                           {isIncome ? "+" : "-"} Rp {tx.amount.toLocaleString("id-ID")}
                         </div>
-                        <span className="font-label-badge text-[10px] uppercase font-bold text-on-surface-variant">
+                        <span className="text-[9px] sm:text-[10px] uppercase font-bold text-on-surface-variant block mt-0.5">
                           {tx.category_id || (isIncome ? "Setoran Kas" : "Belanja")}
                         </span>
                       </div>

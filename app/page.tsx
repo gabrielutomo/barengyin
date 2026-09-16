@@ -44,16 +44,15 @@ export default function LandingPage() {
           <div className="flex items-center gap-2 sm:gap-space-md shrink-0">
             <Link
               href="/masuk"
-              className="font-headline-sm text-xs sm:text-headline-sm text-on-surface uppercase px-2.5 py-1.5 sm:px-space-md sm:py-space-xs border-2 sm:border-[3px] border-black bg-surface-container-lowest shadow-[2px_2px_0px_#000000] sm:shadow-[3px_3px_0px_#000000] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all rounded-sm font-bold"
+              className="font-headline-sm text-xs sm:text-headline-sm text-on-surface uppercase px-3.5 py-1.5 sm:px-space-md sm:py-space-xs border-2 sm:border-[3px] border-black bg-surface-container-lowest shadow-[2px_2px_0px_#000000] sm:shadow-[3px_3px_0px_#000000] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all rounded-sm font-bold"
             >
               Masuk
             </Link>
             <Link
               href="/masuk?mode=register"
-              className="font-headline-sm text-xs sm:text-headline-sm text-on-surface uppercase px-2.5 py-1.5 sm:px-space-md sm:py-space-xs border-2 sm:border-[3px] border-black bg-primary-container shadow-[2px_2px_0px_#000000] sm:shadow-[4px_4px_0px_#000000] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all rounded-sm font-black"
+              className="hidden sm:inline-flex font-headline-sm text-xs sm:text-headline-sm text-on-surface uppercase px-2.5 py-1.5 sm:px-space-md sm:py-space-xs border-2 sm:border-[3px] border-black bg-primary-container shadow-[2px_2px_0px_#000000] sm:shadow-[4px_4px_0px_#000000] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all rounded-sm font-black"
             >
-              <span className="inline sm:hidden">Daftar</span>
-              <span className="hidden sm:inline">Daftar Gratis</span>
+              Daftar Gratis
             </Link>
           </div>
         </div>

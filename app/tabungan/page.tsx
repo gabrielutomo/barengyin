@@ -510,19 +510,19 @@ export default function TabunganPage() {
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={handleOpenCreateGoal}
-              className="bg-primary-container text-on-surface border-[3px] border-black px-3 sm:px-4 py-1.5 rounded font-headline-sm uppercase font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer flex items-center gap-1.5"
+              className="bg-primary-container text-on-surface border-2 sm:border-[3px] border-black px-2.5 sm:px-4 py-1.5 rounded font-headline-sm uppercase font-black text-xs shadow-[2px_2px_0px_#000] sm:shadow-[3px_3px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer flex items-center gap-1 shrink-0"
             >
-              <span className="material-symbols-outlined text-base">add</span>
+              <span className="material-symbols-outlined text-sm sm:text-base">add</span>
               <span className="hidden sm:inline">Buat Target Tabungan</span>
-              <span className="sm:hidden">Target Baru</span>
+              <span className="sm:hidden">Target</span>
             </button>
           </div>
         </header>
 
         {/* MAIN BODY */}
-        <main className="pt-24 pb-16 px-6 sm:px-8 max-w-7xl mx-auto space-y-8">
+        <main className="pt-20 sm:pt-24 pb-20 md:pb-16 px-3 sm:px-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
           {/* 1. HERO FINANCIAL GOALS METRIC CARDS */}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 sm:gap-4">
             {/* Total Terkumpul */}
             <div className="bg-[#D4F34A]/30 border-[3px] border-black rounded-lg p-5 shadow-[4px_4px_0px_#000] flex flex-col justify-between">
               <div className="flex items-center justify-between">
