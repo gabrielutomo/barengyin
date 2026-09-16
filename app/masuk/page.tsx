@@ -115,26 +115,27 @@ function MasukForm() {
         throw new Error("Kata sandi minimal 6 karakter demi keamanan akun bersama.");
       }
 
+      // 1. Mandatory Bot Verification for BOTH login and register
+      if (!turnstileToken) {
+        throw new Error("Silakan selesaikan verifikasi dengan mengklik 'Saya bukan robot' terlebih dahulu sebelum masuk.");
+      }
+
+      // 2. Canonical server-side siteverify
+      const verifyRes = await fetch("/api/verify-turnstile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: turnstileToken,
+          action: mode === "register" ? "signup" : "login",
+        }),
+      });
+      const verifyResult = await verifyRes.json();
+      if (!verifyResult.success) {
+        resetTurnstile();
+        throw new Error(verifyResult.error || "Verifikasi bot Cloudflare gagal. Silakan verifikasi ulang.");
+      }
+
       if (mode === "register") {
-        if (!turnstileToken) {
-          throw new Error("Silakan selesaikan verifikasi dengan mengklik 'Saya bukan robot' terlebih dahulu.");
-        }
-
-        // Canonical server-side siteverify
-        const verifyRes = await fetch("/api/verify-turnstile", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            token: turnstileToken,
-            action: "signup",
-          }),
-        });
-        const verifyResult = await verifyRes.json();
-        if (!verifyResult.success) {
-          resetTurnstile();
-          throw new Error(verifyResult.error || "Verifikasi bot Cloudflare gagal. Silakan verifikasi ulang.");
-        }
-
         const { data, error } = await supabase.auth.signUp({
           email: cleanEmail,
           password,

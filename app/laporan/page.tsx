@@ -395,73 +395,69 @@ export default function LaporanPage() {
         </header>
 
         {/* MAIN BODY */}
-        <main className="pt-24 pb-16 px-4 sm:px-8 max-w-7xl mx-auto space-y-6 print-container">
+        <main className="pt-20 sm:pt-24 pb-20 md:pb-16 px-3 sm:px-8 max-w-7xl mx-auto space-y-5 sm:space-y-6 print-container">
           {/* TOOLBAR CONTROLS (Hidden on print) */}
-          <div className="no-print bg-surface-container-lowest border-[3px] border-black rounded-xl p-4 shadow-[4px_4px_0px_#000] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-2">
-              <span className="font-label-badge uppercase text-xs font-black text-on-surface-variant mr-1">
-                Tampilan:
-              </span>
+          <div className="no-print bg-surface-container-lowest border-[3px] border-black rounded-xl p-3 sm:p-4 shadow-[4px_4px_0px_#000] space-y-3 md:space-y-0 md:flex md:items-center md:justify-between md:gap-4">
+            {/* View Mode Toggle: 2 columns on mobile */}
+            <div className="grid grid-cols-2 gap-1.5 w-full md:w-auto">
               <button
                 type="button"
                 onClick={() => setViewMode("statement")}
-                className={`px-3 py-1.5 border-2 border-black rounded font-headline-sm uppercase text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2.5 sm:px-3 py-2 border-2 border-black rounded font-headline-sm uppercase text-[11px] sm:text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 truncate ${
                   viewMode === "statement"
                     ? "bg-[#38BDF8] text-black shadow-[2px_2px_0px_#000]"
                     : "bg-white hover:bg-slate-100 text-on-surface"
                 }`}
               >
-                <span className="material-symbols-outlined text-sm">receipt_long</span>
-                <span>e-Statement Bank</span>
+                <span className="material-symbols-outlined text-sm shrink-0">receipt_long</span>
+                <span className="truncate">e-Statement</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setViewMode("analytics")}
-                className={`px-3 py-1.5 border-2 border-black rounded font-headline-sm uppercase text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2.5 sm:px-3 py-2 border-2 border-black rounded font-headline-sm uppercase text-[11px] sm:text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 truncate ${
                   viewMode === "analytics"
                     ? "bg-[#38BDF8] text-black shadow-[2px_2px_0px_#000]"
                     : "bg-white hover:bg-slate-100 text-on-surface"
                 }`}
               >
-                <span className="material-symbols-outlined text-sm">pie_chart</span>
-                <span>Grafik &amp; Analitik</span>
+                <span className="material-symbols-outlined text-sm shrink-0">pie_chart</span>
+                <span className="truncate">Grafik &amp; Analitik</span>
               </button>
             </div>
 
-            {/* Period Filter Buttons */}
-            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-              <span className="font-label-badge uppercase text-xs font-black text-on-surface-variant mr-1">
-                Periode:
-              </span>
-              {(
-                [
-                  { id: "3_days", label: "3 Hari" },
-                  { id: "1_week", label: "1 Minggu" },
-                  { id: "1_month", label: "1 Bulan" },
-                  { id: "all", label: "Semua" },
-                ] as const
-              ).map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => setSelectedPeriod(p.id)}
-                  className={`px-3 py-1.5 border-2 border-black rounded font-headline-sm uppercase text-xs font-black transition-all cursor-pointer ${
-                    selectedPeriod === p.id
-                      ? "bg-[#D4F34A] text-black shadow-[2px_2px_0px_#000]"
-                      : "bg-white hover:bg-slate-100 text-on-surface"
-                  }`}
-                >
-                  {p.label}
-                </button>
-              ))}
+            {/* Period Filter Buttons & Download */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+              <div className="grid grid-cols-4 gap-1.5 w-full sm:w-auto">
+                {(
+                  [
+                    { id: "3_days", label: "3 Hari" },
+                    { id: "1_week", label: "1 Minggu" },
+                    { id: "1_month", label: "1 Bulan" },
+                    { id: "all", label: "Semua" },
+                  ] as const
+                ).map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => setSelectedPeriod(p.id)}
+                    className={`px-2 sm:px-3 py-2 border-2 border-black rounded font-headline-sm uppercase text-[11px] sm:text-xs font-black transition-all cursor-pointer text-center truncate ${
+                      selectedPeriod === p.id
+                        ? "bg-[#D4F34A] text-black shadow-[2px_2px_0px_#000]"
+                        : "bg-white hover:bg-slate-100 text-on-surface"
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
 
               <button
                 onClick={handleDownloadPDF}
-                className="ml-auto md:ml-2 px-3 py-1.5 bg-[#003B73] hover:bg-[#002a52] text-white border-2 border-black rounded font-headline-sm uppercase text-xs font-black shadow-[2px_2px_0px_#000] flex items-center gap-1.5 cursor-pointer"
+                className="w-full sm:w-auto px-3 py-2 bg-[#003B73] hover:bg-[#002a52] text-white border-2 border-black rounded font-headline-sm uppercase text-xs font-black shadow-[2px_2px_0px_#000] flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
               >
                 <span className="material-symbols-outlined text-sm">download</span>
-                <span>PDF</span>
+                <span>Download PDF</span>
               </button>
             </div>
           </div>
@@ -470,7 +466,7 @@ export default function LaporanPage() {
           {/* SECTION A: FORMAL E-STATEMENT DOCUMENT (BRI / BANK STYLE) */}
           {/* ========================================================= */}
           <div
-            className={`print-statement-sheet bg-white border-2 border-slate-300 rounded-sm shadow-2xl p-6 sm:p-10 max-w-[860px] mx-auto text-slate-900 ${
+            className={`print-statement-sheet bg-white border-2 border-slate-300 rounded-sm shadow-2xl p-4 sm:p-10 max-w-[860px] mx-auto text-slate-900 ${
               viewMode === "statement" ? "block" : "hidden print:block"
             }`}
           >

@@ -669,33 +669,29 @@ export default function DashboardPage() {
                 {transactions.slice(0, 5).map((tx) => (
                   <div
                     key={tx.id}
-                    className="p-3 sm:p-5 hover:bg-surface-container-low/40 transition-colors flex items-center justify-between gap-3"
+                    className="p-3 sm:p-4 hover:bg-surface-container-low/40 transition-colors flex items-center justify-between gap-3"
                   >
                     <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
                       <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg border-2 border-black flex items-center justify-center shrink-0 shadow-[1.5px_1.5px_0px_#000] sm:shadow-[2px_2px_0px_#000] ${tx.categoryBg}`}>
                         <span className="material-symbols-outlined text-lg sm:text-xl">{tx.categoryIcon}</span>
                       </div>
                       <div className="min-w-0">
-                        <div className="font-headline-sm text-xs sm:text-sm uppercase font-black truncate">
+                        <div className="text-xs sm:text-sm uppercase font-black truncate leading-tight">
                           {tx.title}
                         </div>
-                        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] sm:text-xs text-on-surface-variant font-bold flex-wrap">
-                          <span>{tx.paidBy}</span>
-                          <span>•</span>
-                          <span>{tx.splitInfo}</span>
-                          <span>•</span>
-                          <span>{tx.date}</span>
+                        <div className="text-[11px] sm:text-xs text-on-surface-variant font-bold truncate mt-0.5">
+                          {tx.paidBy} • {tx.splitInfo} • {tx.date}
                         </div>
                       </div>
                     </div>
 
                     <div className="text-right shrink-0">
-                      <div className={`font-numeric-stat text-sm sm:text-lg font-black ${
+                      <div className={`font-numeric-stat text-xs sm:text-base font-black leading-tight ${
                         tx.type === "income" ? "text-[#15803d]" : "text-on-surface"
                       }`}>
                         {tx.type === "income" ? "+" : "-"} Rp {tx.amount.toLocaleString("id-ID")}
                       </div>
-                      <span className="font-label-badge text-[9px] sm:text-[10px] uppercase font-bold text-on-surface-variant block">
+                      <span className="text-[9px] sm:text-[10px] uppercase font-bold text-on-surface-variant block mt-0.5">
                         {tx.category}
                       </span>
                     </div>

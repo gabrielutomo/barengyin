@@ -431,11 +431,11 @@ export default function TransaksiPage() {
         </header>
 
         {/* MAIN BODY */}
-        <main className="pt-24 pb-16 px-6 sm:px-8 max-w-7xl mx-auto space-y-8">
+        <main className="pt-20 sm:pt-24 pb-20 md:pb-16 px-3 sm:px-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
           {/* 1. HERO METRIC CARDS */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             {/* Total Transaksi */}
-            <div className="bg-surface-container-lowest border-[3px] border-black rounded-lg p-5 shadow-[4px_4px_0px_#000] flex flex-col justify-between">
+            <div className="bg-surface-container-lowest border-[3px] border-black rounded-lg p-4 sm:p-5 shadow-[4px_4px_0px_#000] flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="font-label-badge text-xs uppercase font-black text-on-surface-variant">
                   TOTAL TERCATAT
@@ -445,7 +445,7 @@ export default function TransaksiPage() {
                 </span>
               </div>
               <div className="mt-3">
-                <div className="font-numeric-stat text-3xl font-black">
+                <div className="font-numeric-stat text-2xl sm:text-3xl font-black">
                   {transactions.length}
                 </div>
                 <div className="font-body-sm text-xs text-on-surface-variant font-bold mt-0.5">
@@ -455,17 +455,17 @@ export default function TransaksiPage() {
             </div>
 
             {/* Total Pengeluaran */}
-            <div className="bg-secondary-container/40 border-[3px] border-black rounded-lg p-5 shadow-[4px_4px_0px_#000] flex flex-col justify-between">
+            <div className="bg-secondary-container/40 border-[3px] border-black rounded-lg p-4 sm:p-5 shadow-[4px_4px_0px_#000] flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="font-label-badge text-xs uppercase font-black text-on-surface-variant">
                   TOTAL PENGELUARAN
                 </span>
-                <span className="w-8 h-8 rounded bg-[#ffdad6] text-[#ba1a1a] border-2 border-black flex items-center justify-center font-bold text-sm">
+                <span className="w-8 h-8 rounded bg-[#ffdad6] border-2 border-black flex items-center justify-center font-bold text-sm text-[#ba1a1a]">
                   ↓
                 </span>
               </div>
               <div className="mt-3">
-                <div className="font-numeric-stat text-3xl font-black text-[#ba1a1a]">
+                <div className="font-numeric-stat text-xl sm:text-2xl font-black text-[#ba1a1a] truncate">
                   Rp {totalExpense.toLocaleString("id-ID")}
                 </div>
                 <div className="font-body-sm text-xs text-on-surface-variant font-bold mt-0.5">
@@ -475,7 +475,7 @@ export default function TransaksiPage() {
             </div>
 
             {/* Total Pemasukan */}
-            <div className="bg-[#D4F34A]/30 border-[3px] border-black rounded-lg p-5 shadow-[4px_4px_0px_#000] flex flex-col justify-between">
+            <div className="bg-[#D4F34A]/30 border-[3px] border-black rounded-lg p-4 sm:p-5 shadow-[4px_4px_0px_#000] flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="font-label-badge text-xs uppercase font-black text-on-surface-variant">
                   TOTAL PEMASUKAN
@@ -485,48 +485,49 @@ export default function TransaksiPage() {
                 </span>
               </div>
               <div className="mt-3">
-                <div className="font-numeric-stat text-3xl font-black text-[#15803d]">
+                <div className="font-numeric-stat text-xl sm:text-2xl font-black text-on-surface truncate">
                   Rp {totalIncome.toLocaleString("id-ID")}
                 </div>
                 <div className="font-body-sm text-xs text-on-surface-variant font-bold mt-0.5">
-                  {transactions.filter((t) => t.type === "income").length} pemasukan / top-up
+                  {transactions.filter((t) => t.type === "income").length} pemasukan tersimpan
                 </div>
               </div>
             </div>
           </div>
 
           {/* 2. FILTER & SEARCH TOOLBAR */}
-          <div className="bg-surface-container-lowest border-[3px] border-black rounded-lg p-4 shadow-[4px_4px_0px_#000] space-y-4">
-            <div className="flex flex-col md:flex-row items-center gap-3">
+          <div className="bg-surface-container-lowest border-[3px] border-black rounded-lg p-3 sm:p-4 shadow-[4px_4px_0px_#000] space-y-3">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 sm:gap-3">
               {/* Search Bar */}
-              <div className="relative flex-1 w-full">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">
+              <div className="relative flex-1">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">
                   search
                 </span>
                 <input
                   type="text"
-                  placeholder="Cari transaksi, merchant, nama penginput atau pengedit..."
+                  placeholder="Cari transaksi berdasarkan catatan atau kategori..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border-[2px] border-black rounded font-body-md font-bold text-sm bg-white focus:outline-none focus:shadow-[3px_3px_0px_#000] transition-shadow"
+                  className="w-full pl-10 pr-4 py-2 border-[2px] border-black rounded font-body-md font-bold text-xs sm:text-sm bg-white focus:outline-none focus:shadow-[3px_3px_0px_#000] transition-shadow"
                 />
               </div>
 
               {/* Type Pills */}
-              <div className="flex items-center gap-1.5 w-full md:w-auto">
+              <div className="grid grid-cols-3 gap-1.5 w-full md:flex md:w-auto">
                 <button
                   onClick={() => setFilterType("all")}
-                  className={`px-3 py-2 border-2 border-black rounded font-headline-sm uppercase text-xs font-black transition-all cursor-pointer ${
+                  className={`px-2 sm:px-3 py-2 border-2 border-black rounded font-headline-sm uppercase text-[11px] sm:text-xs font-black transition-all cursor-pointer text-center truncate ${
                     filterType === "all"
                       ? "bg-primary-container shadow-[2px_2px_0px_#000]"
                       : "bg-white hover:bg-surface-container-low"
                   }`}
                 >
-                  Semua ({transactions.length})
+                  <span className="sm:hidden">Semua</span>
+                  <span className="hidden sm:inline">Semua ({transactions.length})</span>
                 </button>
                 <button
                   onClick={() => setFilterType("expense")}
-                  className={`px-3 py-2 border-2 border-black rounded font-headline-sm uppercase text-xs font-black transition-all cursor-pointer ${
+                  className={`px-2 sm:px-3 py-2 border-2 border-black rounded font-headline-sm uppercase text-[11px] sm:text-xs font-black transition-all cursor-pointer text-center truncate ${
                     filterType === "expense"
                       ? "bg-[#ffdad6] text-[#ba1a1a] shadow-[2px_2px_0px_#000]"
                       : "bg-white hover:bg-surface-container-low"
@@ -536,7 +537,7 @@ export default function TransaksiPage() {
                 </button>
                 <button
                   onClick={() => setFilterType("income")}
-                  className={`px-3 py-2 border-2 border-black rounded font-headline-sm uppercase text-xs font-black transition-all cursor-pointer ${
+                  className={`px-2 sm:px-3 py-2 border-2 border-black rounded font-headline-sm uppercase text-[11px] sm:text-xs font-black transition-all cursor-pointer text-center truncate ${
                     filterType === "income"
                       ? "bg-[#D4F34A] shadow-[2px_2px_0px_#000]"
                       : "bg-white hover:bg-surface-container-low"
