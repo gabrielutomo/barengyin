@@ -81,7 +81,15 @@ export default function LaporanPage() {
             .select("id, name")
             .eq("id", activeCoupleId)
             .maybeSingle();
-          if (cRow) setCouple(cRow);
+          if (cRow) {
+            let currentName = cRow.name;
+            if (currentName && currentName.includes("Gabriel Utomo")) {
+              currentName = currentName.replace("Gabriel Utomo", myName);
+              cRow.name = currentName;
+              supabase.from("couples").update({ name: currentName }).eq("id", cRow.id).then();
+            }
+            setCouple(cRow);
+          }
 
           // Partner
           const { data: pMembers } = await supabase
@@ -91,13 +99,17 @@ export default function LaporanPage() {
             .neq("profile_id", user.id)
             .limit(1);
 
+          let partnerName = "";
           if (pMembers && pMembers.length > 0) {
             const { data: pProf } = await supabase
               .from("profiles")
               .select("id, full_name")
               .eq("id", pMembers[0].profile_id)
               .maybeSingle();
-            if (pProf) setPartner(pProf);
+            if (pProf) {
+              setPartner(pProf);
+              partnerName = pProf.full_name;
+            }
           }
 
           // 3. Transactions
@@ -110,10 +122,15 @@ export default function LaporanPage() {
 
           if (txRows) {
             setTransactions(
-              txRows.map((t) => ({
-                ...t,
-                amount: Number(t.amount),
-              }))
+              txRows.map((t) => {
+                const isMine = t.created_by === user.id || t.paid_by === "Gabriel Utomo" || t.paid_by === "Saya" || t.paid_by === myName;
+                const resolvedPaidBy = isMine ? myName : (t.paid_by || partnerName || "Pasangan");
+                return {
+                  ...t,
+                  paid_by: resolvedPaidBy,
+                  amount: Number(t.amount),
+                };
+              })
             );
           }
         }
