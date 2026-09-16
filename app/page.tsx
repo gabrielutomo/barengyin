@@ -87,18 +87,12 @@ export default function LandingPage() {
               </p>
 
               {/* CTAs */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-space-sm sm:gap-space-md w-full max-w-md mb-space-lg px-2 sm:px-0">
+              <div className="flex items-center justify-center w-full max-w-md mb-space-lg px-2 sm:px-0">
                 <Link
                   href="/masuk?mode=register"
-                  className="w-full sm:w-auto font-headline-sm text-sm sm:text-headline-sm uppercase px-space-md sm:px-space-lg py-3 sm:py-space-md bg-primary-container text-black border-[3px] sm:border-[4px] border-black shadow-[4px_4px_0px_#000000] sm:shadow-[6px_6px_0px_#000000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-space-xs rounded font-bold text-center"
+                  className="w-full sm:w-auto font-headline-sm text-sm sm:text-headline-sm uppercase px-8 sm:px-10 py-3.5 sm:py-space-md bg-primary-container text-black border-[3px] sm:border-[4px] border-black shadow-[4px_4px_0px_#000000] sm:shadow-[6px_6px_0px_#000000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-space-xs rounded font-bold text-center"
                 >
                   Mulai Gratis Sekarang →
-                </Link>
-                <Link
-                  href="/dashboard"
-                  className="w-full sm:w-auto font-headline-sm text-sm sm:text-headline-sm uppercase px-space-md sm:px-space-lg py-3 sm:py-space-md bg-surface-container-lowest text-black border-[3px] sm:border-[4px] border-black shadow-[4px_4px_0px_#000000] sm:shadow-[6px_6px_0px_#000000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-space-xs rounded font-bold text-center"
-                >
-                  Lihat Live Demo ⚡
                 </Link>
               </div>
 
@@ -340,12 +334,11 @@ export default function LandingPage() {
                       <span className="font-headline-sm text-headline-sm uppercase font-bold">
                         Transaksi Terbaru
                       </span>
-                      <Link
-                        href="/dashboard"
-                        className="font-label-badge text-label-badge uppercase bg-surface-container border-[2px] border-black px-space-sm py-space-xs hover:bg-black hover:text-white transition-colors rounded-sm"
+                      <span
+                        className="font-label-badge text-label-badge uppercase bg-surface-container border-[2px] border-black px-space-sm py-space-xs rounded-sm font-bold"
                       >
-                        + Buka Dashboard
-                      </Link>
+                        Contoh Tampilan
+                      </span>
                     </div>
 
                     {/* Ledger Feed Items */}
