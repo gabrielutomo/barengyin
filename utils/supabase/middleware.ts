@@ -34,7 +34,41 @@ export const createClient = async (request: NextRequest) => {
   });
 
   // IMPORTANT: DO NOT REMOVE. This refreshes the session token and updates cookies
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const protectedPaths = [
+    "/dashboard",
+    "/dompet",
+    "/transaksi",
+    "/tabungan",
+    "/laporan",
+    "/pasangan",
+    "/anggaran",
+    "/profil",
+    "/pengaturan",
+    "/scan-struk",
+  ];
+
+  const pathname = request.nextUrl.pathname;
+  const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
+
+  // 1. Guard protected routes from unauthenticated access
+  if (isProtected && !user) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/masuk";
+    redirectUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  // 2. Redirect logged-in users away from /masuk to /dashboard
+  if (user && pathname === "/masuk") {
+    const dashboardUrl = request.nextUrl.clone();
+    dashboardUrl.pathname = "/dashboard";
+    return NextResponse.redirect(dashboardUrl);
+  }
 
   return supabaseResponse;
 };
+
