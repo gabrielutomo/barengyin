@@ -307,11 +307,11 @@ export default function DashboardPage() {
       {/* RIGHT MAIN CONTAINER */}
       <div className="pl-0 md:pl-60 pb-20 md:pb-12 min-h-screen">
         {/* TOP BAR FIXED HEADER */}
-        <header className="fixed top-0 left-0 md:left-60 right-0 h-16 bg-surface-container-lowest border-b-[3px] border-black z-40 px-4 sm:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
-            <span className="font-label-badge text-label-badge uppercase px-2.5 sm:px-3 py-1 bg-primary-container text-on-surface border-[2px] border-black shadow-[2px_2px_0px_#000] rounded-sm font-black flex items-center gap-1.5 truncate">
+        <header className="fixed top-0 left-0 md:left-60 right-0 h-16 bg-surface-container-lowest border-b-[3px] border-black z-40 px-3 sm:px-8 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 overflow-hidden min-w-0">
+            <span className="font-label-badge text-label-badge uppercase px-2 sm:px-3 py-1 bg-primary-container text-on-surface border-[2px] border-black shadow-[2px_2px_0px_#000] rounded-sm font-black flex items-center gap-1.5 shrink-0">
               <span className="material-symbols-outlined text-sm">grid_view</span>
-              <span className="truncate">DASHBOARD</span>
+              <span>DASHBOARD</span>
             </span>
             <span className="hidden sm:inline font-body-sm text-xs text-on-surface-variant font-bold truncate">
               • {couple?.name || "Dompet Bersama"}
@@ -319,18 +319,19 @@ export default function DashboardPage() {
           </div>
 
           {/* User Quick Nav Bar */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <Link
               href="/laporan"
-              className="font-label-badge text-xs uppercase px-3 py-1.5 bg-[#D4F34A] hover:bg-[#c2e439] text-on-surface border-[2px] border-black shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5 font-black rounded-sm"
+              className="font-label-badge text-xs uppercase px-2.5 sm:px-3 py-1.5 bg-[#D4F34A] hover:bg-[#c2e439] text-on-surface border-[2px] border-black shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1 font-black rounded-sm"
             >
               <span className="material-symbols-outlined text-[16px]">picture_as_pdf</span>
-              <span>Laporan PDF</span>
+              <span className="hidden sm:inline">Laporan PDF</span>
+              <span className="sm:hidden">PDF</span>
             </Link>
 
             <Link
               href="/pengaturan"
-              className="w-9 h-9 rounded-lg bg-surface-container border-2 border-black flex items-center justify-center font-bold text-xs shadow-[2px_2px_0px_#000] hover:bg-slate-200"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-surface-container border-2 border-black flex items-center justify-center font-bold text-xs shadow-[2px_2px_0px_#000] hover:bg-slate-200"
               title="Pengaturan Akun"
             >
               <span className="material-symbols-outlined text-lg">settings</span>
@@ -339,7 +340,7 @@ export default function DashboardPage() {
         </header>
 
         {/* MAIN DASHBOARD CONTENT */}
-        <main className="pt-24 pb-16 px-6 sm:px-8 max-w-7xl mx-auto space-y-8">
+        <main className="pt-20 sm:pt-24 pb-20 md:pb-16 px-3 sm:px-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
           {/* 1. WELCOME & QUICK HUB BANNER */}
           <div className="bg-surface-container-lowest border-[4px] border-black shadow-[6px_6px_0px_#000] rounded-xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-1">
@@ -668,18 +669,18 @@ export default function DashboardPage() {
                 {transactions.slice(0, 5).map((tx) => (
                   <div
                     key={tx.id}
-                    className="p-4 sm:p-5 hover:bg-surface-container-low/40 transition-colors flex items-center justify-between gap-4"
+                    className="p-3 sm:p-5 hover:bg-surface-container-low/40 transition-colors flex items-center justify-between gap-3"
                   >
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <div className={`w-10 h-10 rounded-lg border-2 border-black flex items-center justify-center shrink-0 shadow-[2px_2px_0px_#000] ${tx.categoryBg}`}>
-                        <span className="material-symbols-outlined text-xl">{tx.categoryIcon}</span>
+                    <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+                      <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg border-2 border-black flex items-center justify-center shrink-0 shadow-[1.5px_1.5px_0px_#000] sm:shadow-[2px_2px_0px_#000] ${tx.categoryBg}`}>
+                        <span className="material-symbols-outlined text-lg sm:text-xl">{tx.categoryIcon}</span>
                       </div>
                       <div className="min-w-0">
-                        <div className="font-headline-sm text-sm uppercase font-black truncate">
+                        <div className="font-headline-sm text-xs sm:text-sm uppercase font-black truncate">
                           {tx.title}
                         </div>
-                        <div className="flex items-center gap-2 mt-0.5 text-xs text-on-surface-variant font-bold flex-wrap">
-                          <span>Dibayar: <strong>{tx.paidBy}</strong></span>
+                        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] sm:text-xs text-on-surface-variant font-bold flex-wrap">
+                          <span>{tx.paidBy}</span>
                           <span>•</span>
                           <span>{tx.splitInfo}</span>
                           <span>•</span>
@@ -689,12 +690,12 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="text-right shrink-0">
-                      <div className={`font-numeric-stat text-base sm:text-lg font-black ${
+                      <div className={`font-numeric-stat text-sm sm:text-lg font-black ${
                         tx.type === "income" ? "text-[#15803d]" : "text-on-surface"
                       }`}>
                         {tx.type === "income" ? "+" : "-"} Rp {tx.amount.toLocaleString("id-ID")}
                       </div>
-                      <span className="font-label-badge text-[10px] uppercase font-bold text-on-surface-variant">
+                      <span className="font-label-badge text-[9px] sm:text-[10px] uppercase font-bold text-on-surface-variant block">
                         {tx.category}
                       </span>
                     </div>
@@ -703,10 +704,10 @@ export default function DashboardPage() {
               </div>
             )}
 
-            <div className="p-4 bg-surface-container-low flex items-center justify-between text-xs font-bold text-on-surface-variant">
-              <span>Halaman transaksi khusus mendukung fitur Tambah, Edit, Hapus, Pencarian, &amp; Filter lengkap.</span>
-              <Link href="/transaksi" className="text-primary uppercase font-headline-sm font-black underline hover:text-black">
-                Buka Halaman Transaksi &rarr;
+            <div className="p-3.5 sm:p-4 bg-surface-container-low flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-bold text-on-surface-variant">
+              <span>Halaman transaksi khusus mendukung Tambah, Edit, Hapus, Pencarian, &amp; Filter lengkap.</span>
+              <Link href="/transaksi" className="text-primary uppercase font-headline-sm font-black underline hover:text-black shrink-0">
+                Buka Transaksi &rarr;
               </Link>
             </div>
           </div>

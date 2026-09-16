@@ -16,8 +16,8 @@ export default function LandingPage() {
     <div className="bg-surface font-body-md text-on-surface min-h-screen flex flex-col antialiased selection:bg-primary-container selection:text-black">
       {/* HEADER / NAVBAR */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest border-b-[3px] border-black">
-        <div className="h-20 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <Logo href="/" size="md" />
+        <div className="h-16 sm:h-20 max-w-[1200px] mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2">
+          <Logo href="/" size="md" className="shrink-0" />
 
 
           <nav className="hidden md:flex items-center gap-space-lg">
@@ -41,73 +41,74 @@ export default function LandingPage() {
             </a>
           </nav>
 
-          <div className="flex items-center gap-space-md">
+          <div className="flex items-center gap-2 sm:gap-space-md shrink-0">
             <Link
               href="/masuk"
-              className="font-headline-sm text-headline-sm text-on-surface uppercase px-space-md py-space-xs border-[3px] border-black bg-surface-container-lowest shadow-[3px_3px_0px_#000000] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_#000000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all rounded-sm"
+              className="font-headline-sm text-xs sm:text-headline-sm text-on-surface uppercase px-2.5 py-1.5 sm:px-space-md sm:py-space-xs border-2 sm:border-[3px] border-black bg-surface-container-lowest shadow-[2px_2px_0px_#000000] sm:shadow-[3px_3px_0px_#000000] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all rounded-sm font-bold"
             >
               Masuk
             </Link>
             <Link
               href="/masuk?mode=register"
-              className="font-headline-sm text-headline-sm text-on-surface uppercase px-space-md py-space-xs border-[3px] border-black bg-primary-container shadow-[4px_4px_0px_#000000] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0px_#000000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all rounded-sm font-bold"
+              className="font-headline-sm text-xs sm:text-headline-sm text-on-surface uppercase px-2.5 py-1.5 sm:px-space-md sm:py-space-xs border-2 sm:border-[3px] border-black bg-primary-container shadow-[2px_2px_0px_#000000] sm:shadow-[4px_4px_0px_#000000] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all rounded-sm font-black"
             >
-              Daftar Gratis
+              <span className="inline sm:hidden">Daftar</span>
+              <span className="hidden sm:inline">Daftar Gratis</span>
             </Link>
           </div>
         </div>
       </header>
 
       {/* MAIN CONTENT */}
-      <main className="w-full pt-20 flex-1 bg-surface">
+      <main className="w-full pt-16 sm:pt-20 flex-1 bg-surface overflow-x-hidden">
         <div className="flex flex-col w-full">
           {/* HERO SECTION */}
-          <section className="w-full bg-[#F7F4EB] border-b-[4px] border-black py-space-xl overflow-hidden relative">
-            <div className="max-w-[1200px] mx-auto px-margin-mobile lg:px-margin flex flex-col items-center text-center relative z-10">
+          <section className="w-full bg-[#F7F4EB] border-b-[4px] border-black py-space-lg sm:py-space-xl overflow-hidden relative">
+            <div className="max-w-[1200px] mx-auto px-3 sm:px-6 lg:px-8 flex flex-col items-center text-center relative z-10">
               {/* Top Badge */}
-              <div className="inline-flex items-center gap-space-xs bg-[#FDE047] border-[3px] border-black px-space-md py-space-xs shadow-[4px_4px_0px_#000000] rotate-[-1deg] hover:rotate-0 transition-transform mb-space-lg rounded-sm">
-                <span className="font-label-badge text-label-badge text-black uppercase tracking-wider font-bold">
+              <div className="inline-flex items-center gap-space-xs bg-[#FDE047] border-[2.5px] sm:border-[3px] border-black px-2.5 py-1 sm:px-space-md sm:py-space-xs shadow-[3px_3px_0px_#000000] sm:shadow-[4px_4px_0px_#000000] rotate-[-1deg] hover:rotate-0 transition-transform mb-space-md sm:mb-space-lg rounded-sm max-w-full">
+                <span className="font-label-badge text-[10px] sm:text-label-badge text-black uppercase tracking-wider font-bold truncate">
                   ✨ APLIKASI KEUANGAN PASANGAN #1 DI INDONESIA
                 </span>
               </div>
 
               {/* Display Headline */}
-              <h1 className="font-display-hero text-display-hero-mobile md:text-display-hero text-on-surface uppercase tracking-tight max-w-4xl mx-auto leading-none mb-space-md">
+              <h1 className="font-display-hero text-2xl sm:text-4xl md:text-display-hero text-on-surface uppercase tracking-tight max-w-4xl mx-auto leading-tight mb-space-md break-words">
                 Catat Pengeluaran &amp; Pemasukan Berdua,{" "}
-                <span className="bg-primary-container px-space-xs border-[3px] border-black inline-block mt-2 shadow-[4px_4px_0px_#000000] -rotate-1 rounded-sm">
+                <span className="bg-primary-container px-2 sm:px-space-xs border-[2.5px] sm:border-[3px] border-black inline-block mt-1 sm:mt-2 shadow-[3px_3px_0px_#000000] sm:shadow-[4px_4px_0px_#000000] -rotate-1 rounded-sm">
                   Tanpa Drama.
                 </span>
               </h1>
 
               {/* Subtitle */}
-              <p className="font-body-lg text-body-lg text-on-surface max-w-2xl mx-auto mb-space-xl font-medium">
+              <p className="font-body-lg text-sm sm:text-body-lg text-on-surface max-w-2xl mx-auto mb-space-lg sm:mb-space-xl font-medium px-2">
                 Barengyin bantu kamu dan pasangan lacak saldo bersama, split bon
                 otomatis, dan capai financial goals bareng secara transparan
                 &amp; seru.
               </p>
 
               {/* CTAs */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-space-md w-full max-w-md mb-space-lg">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-space-sm sm:gap-space-md w-full max-w-md mb-space-lg px-2 sm:px-0">
                 <Link
                   href="/masuk?mode=register"
-                  className="w-full sm:w-auto font-headline-sm text-headline-sm uppercase px-space-lg py-space-md bg-primary-container text-black border-[4px] border-black shadow-[6px_6px_0px_#000000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[8px_8px_0px_#000000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-space-xs rounded font-bold"
+                  className="w-full sm:w-auto font-headline-sm text-sm sm:text-headline-sm uppercase px-space-md sm:px-space-lg py-3 sm:py-space-md bg-primary-container text-black border-[3px] sm:border-[4px] border-black shadow-[4px_4px_0px_#000000] sm:shadow-[6px_6px_0px_#000000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-space-xs rounded font-bold text-center"
                 >
                   Mulai Gratis Sekarang →
                 </Link>
                 <Link
                   href="/dashboard"
-                  className="w-full sm:w-auto font-headline-sm text-headline-sm uppercase px-space-lg py-space-md bg-surface-container-lowest text-black border-[4px] border-black shadow-[6px_6px_0px_#000000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[8px_8px_0px_#000000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-space-xs rounded font-bold"
+                  className="w-full sm:w-auto font-headline-sm text-sm sm:text-headline-sm uppercase px-space-md sm:px-space-lg py-3 sm:py-space-md bg-surface-container-lowest text-black border-[3px] sm:border-[4px] border-black shadow-[4px_4px_0px_#000000] sm:shadow-[6px_6px_0px_#000000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-space-xs rounded font-bold text-center"
                 >
                   Lihat Live Demo ⚡
                 </Link>
               </div>
 
               {/* Social Proof Badge */}
-              <div className="inline-flex items-center gap-space-xs bg-surface-container-lowest border-[2px] border-black px-space-md py-space-xs shadow-[3px_3px_0px_#000000] mb-space-xl text-black font-body-sm text-body-sm font-bold rounded-sm">
-                <span className="material-symbols-outlined text-secondary text-sm">
+              <div className="inline-flex items-center gap-space-xs bg-surface-container-lowest border-[2px] border-black px-3 py-1.5 sm:px-space-md sm:py-space-xs shadow-[2px_2px_0px_#000000] sm:shadow-[3px_3px_0px_#000000] mb-space-lg sm:mb-space-xl text-black font-body-sm text-xs sm:text-body-sm font-bold rounded-sm text-left max-w-full">
+                <span className="material-symbols-outlined text-secondary text-sm shrink-0">
                   favorite
                 </span>
-                <span>
+                <span className="truncate sm:whitespace-normal">
                   Dipercaya 15.000+ pasangan aktif • Bebas drama tiap akhir bulan
                 </span>
               </div>
@@ -115,18 +116,18 @@ export default function LandingPage() {
               {/* Hero Visual Card with Stickers */}
               <div className="relative w-full max-w-xl mx-auto mt-space-sm">
                 {/* Floating Stickers */}
-                <div className="absolute -top-4 -left-4 md:-left-10 z-20 bg-secondary-container text-black font-label-badge text-label-badge uppercase px-space-md py-space-xs border-[3px] border-black shadow-[4px_4px_0px_#000000] rotate-[-6deg] rounded-sm font-bold">
+                <div className="absolute -top-3 left-1 sm:-left-4 md:-left-10 z-20 bg-secondary-container text-black font-label-badge text-[10px] sm:text-label-badge uppercase px-2 sm:px-space-md py-0.5 sm:py-space-xs border-2 sm:border-[3px] border-black shadow-[3px_3px_0px_#000000] sm:shadow-[4px_4px_0px_#000000] rotate-[-6deg] rounded-sm font-bold">
                   SPLIT 50:50! 🔥
                 </div>
-                <div className="absolute top-1/3 -right-3 md:-right-8 z-20 bg-[#FDE047] text-black font-label-badge text-label-badge uppercase px-space-md py-space-xs border-[3px] border-black shadow-[4px_4px_0px_#000000] rotate-[8deg] rounded-sm font-bold">
+                <div className="absolute top-1/3 right-1 sm:-right-3 md:-right-8 z-20 bg-[#FDE047] text-black font-label-badge text-[10px] sm:text-label-badge uppercase px-2 sm:px-space-md py-0.5 sm:py-space-xs border-2 sm:border-[3px] border-black shadow-[3px_3px_0px_#000000] sm:shadow-[4px_4px_0px_#000000] rotate-[8deg] rounded-sm font-bold">
                   KOPI SUSU RP 38K ☕
                 </div>
-                <div className="absolute -bottom-5 left-1/4 z-20 bg-primary-container text-black font-label-badge text-label-badge uppercase px-space-md py-space-xs border-[3px] border-black shadow-[4px_4px_0px_#000000] rotate-[-3deg] rounded-sm font-bold">
+                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 sm:left-1/4 sm:translate-x-0 z-20 bg-primary-container text-black font-label-badge text-[10px] sm:text-label-badge uppercase px-2 sm:px-space-md py-0.5 sm:py-space-xs border-2 sm:border-[3px] border-black shadow-[3px_3px_0px_#000000] sm:shadow-[4px_4px_0px_#000000] rotate-[-3deg] rounded-sm font-bold whitespace-nowrap">
                   HEMAT RP 2.4JT BULAN INI 💸
                 </div>
 
                 {/* Main Card Wrapper */}
-                <div className="bg-surface-container-lowest border-[4px] border-black p-space-md shadow-[8px_8px_0px_#000000] rounded-xl relative">
+                <div className="bg-surface-container-lowest border-[3px] sm:border-[4px] border-black p-3 sm:p-space-md shadow-[5px_5px_0px_#000000] sm:shadow-[8px_8px_0px_#000000] rounded-xl relative">
                   <div className="w-full aspect-square border-[3px] border-black overflow-hidden bg-surface-variant flex items-center justify-center relative rounded">
                     <Image
                       alt="Ilustrasi playful couple Barengyin bergaya pop-art neo-brutalist"
@@ -262,15 +263,15 @@ export default function LandingPage() {
               </div>
 
               {/* Brutalist Browser Mockup */}
-              <div className="max-w-4xl mx-auto bg-surface-container-lowest border-[4px] border-black shadow-[8px_8px_0px_#000000] rounded-xl overflow-hidden transform md:-rotate-1 hover:rotate-0 transition-transform">
+              <div className="max-w-4xl mx-auto bg-surface-container-lowest border-[3px] sm:border-[4px] border-black shadow-[5px_5px_0px_#000000] md:shadow-[8px_8px_0px_#000000] rounded-xl overflow-hidden transform md:-rotate-1 hover:rotate-0 transition-transform">
                 {/* Browser Top Bar */}
-                <div className="bg-surface-container-highest border-b-[3px] border-black px-space-md py-space-xs flex items-center justify-between">
-                  <div className="flex items-center gap-space-xs">
-                    <span className="w-3.5 h-3.5 rounded-full bg-error border-[2px] border-black inline-block"></span>
-                    <span className="w-3.5 h-3.5 rounded-full bg-[#FDE047] border-[2px] border-black inline-block"></span>
-                    <span className="w-3.5 h-3.5 rounded-full bg-primary-container border-[2px] border-black inline-block"></span>
+                <div className="bg-surface-container-highest border-b-[3px] border-black px-3 sm:px-space-md py-space-xs flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 sm:gap-space-xs">
+                    <span className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-error border-[2px] border-black inline-block"></span>
+                    <span className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-[#FDE047] border-[2px] border-black inline-block"></span>
+                    <span className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-primary-container border-[2px] border-black inline-block"></span>
                   </div>
-                  <div className="bg-surface-container-lowest border-[2px] border-black px-space-md py-space-xs font-label-badge text-label-badge text-on-surface truncate max-w-[260px] md:max-w-md rounded-sm">
+                  <div className="bg-surface-container-lowest border-[2px] border-black px-2 sm:px-space-md py-0.5 sm:py-space-xs font-label-badge text-[10px] sm:text-label-badge text-on-surface truncate max-w-[170px] sm:max-w-[260px] md:max-w-md rounded-sm">
                     app.barengyin.com/dashboard - Aris &amp; Nisa&apos;s Vault
                   </div>
                   <div className="flex items-center gap-space-xs">
@@ -592,7 +593,7 @@ export default function LandingPage() {
               </p>
               <Link
                 href="/masuk?mode=register"
-                className="inline-flex items-center gap-space-sm font-headline-md text-headline-md uppercase px-space-xl py-space-md bg-surface-container-lowest text-black border-[4px] border-black shadow-[6px_6px_0px_#000000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[8px_8px_0px_#000000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all rounded font-bold"
+                className="inline-flex items-center justify-center text-center gap-space-sm font-headline-md text-sm sm:text-headline-md uppercase px-4 sm:px-space-xl py-3 sm:py-space-md bg-surface-container-lowest text-black border-[3px] sm:border-[4px] border-black shadow-[4px_4px_0px_#000000] sm:shadow-[6px_6px_0px_#000000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_#000000] sm:hover:shadow-[8px_8px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all rounded font-bold max-w-full"
               >
                 Mulai Bareng Pasangan Sekarang →
               </Link>

@@ -117,7 +117,7 @@ function MasukForm() {
 
       if (mode === "register") {
         if (!turnstileToken) {
-          throw new Error("Silakan selesaikan verifikasi Cloudflare Turnstile bahwa kamu bukan bot.");
+          throw new Error("Silakan selesaikan verifikasi dengan mengklik 'Saya bukan robot' terlebih dahulu.");
         }
 
         // Canonical server-side siteverify
@@ -749,11 +749,7 @@ function MasukForm() {
                 </div>
 
                 {/* Cloudflare Turnstile Bot Verification Widget */}
-                <div className="py-2.5 px-3 bg-surface-container-low/80 border-[3px] border-black rounded-lg shadow-[3px_3px_0px_#000] flex flex-col items-center justify-center">
-                  <div className="text-[11px] font-black uppercase tracking-wider text-on-surface mb-1.5 flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[16px] text-[#22C55E]">verified_user</span>
-                    <span>Verifikasi Keamanan Bot Cloudflare</span>
-                  </div>
+                <div className="w-full flex justify-center">
                   <Turnstile
                     ref={turnstileRef}
                     action={mode === "register" ? "signup" : "login"}
