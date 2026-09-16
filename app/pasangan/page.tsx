@@ -96,6 +96,12 @@ export default function PasanganPage() {
           .maybeSingle();
 
         if (cRow) {
+          let currentName = cRow.name;
+          if (currentName && currentName.includes("Gabriel Utomo")) {
+            currentName = currentName.replace("Gabriel Utomo", myName);
+            cRow.name = currentName;
+            supabase.from("couples").update({ name: currentName }).eq("id", cRow.id).then();
+          }
           setCouple(cRow);
           setWalletMode(cRow.wallet_mode || "combined");
         }

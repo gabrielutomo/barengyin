@@ -90,7 +90,15 @@ export default function DompetPage() {
           .select("id, name")
           .eq("id", activeCoupleId)
           .maybeSingle();
-        if (cRow) setCouple(cRow);
+        if (cRow) {
+          let currentCoupleName = cRow.name;
+          if (currentCoupleName && (currentCoupleName.includes("Gabriel Utomo") || currentCoupleName === "Dompet Gabriel Utomo")) {
+            currentCoupleName = currentCoupleName.replace("Gabriel Utomo", myName);
+            cRow.name = currentCoupleName;
+            supabase.from("couples").update({ name: currentCoupleName }).eq("id", cRow.id).then();
+          }
+          setCouple(cRow);
+        }
 
         // Partner
         const { data: pMembers } = await supabase
@@ -100,13 +108,17 @@ export default function DompetPage() {
           .neq("profile_id", user.id)
           .limit(1);
 
+        let partnerName = "";
         if (pMembers && pMembers.length > 0) {
           const { data: pProf } = await supabase
             .from("profiles")
             .select("id, full_name")
             .eq("id", pMembers[0].profile_id)
             .maybeSingle();
-          if (pProf) setPartner(pProf);
+          if (pProf) {
+            setPartner(pProf);
+            partnerName = pProf.full_name;
+          }
         }
 
         // Transactions
@@ -119,10 +131,15 @@ export default function DompetPage() {
 
         if (txRows) {
           setTransactions(
-            txRows.map((t) => ({
-              ...t,
-              amount: Number(t.amount),
-            }))
+            txRows.map((t) => {
+              const isMine = t.created_by === user.id || t.paid_by === "Gabriel Utomo" || t.paid_by === "Saya" || t.paid_by === myName;
+              const resolvedPaidBy = isMine ? myName : (t.paid_by || partnerName || "Pasangan");
+              return {
+                ...t,
+                paid_by: resolvedPaidBy,
+                amount: Number(t.amount),
+              };
+            })
           );
         }
       }
@@ -437,7 +454,11 @@ export default function DompetPage() {
                           </div>
 
                           <div className="text-[11px] sm:text-xs text-on-surface-variant font-bold mt-1 truncate">
-                            <span>{isIncome ? "Disetor:" : "Oleh:"} {tx.paid_by || "Saya"}</span>
+                            <span>{isIncome ? "Disetor:" : "Oleh:"} {
+                              (tx.created_by === currentUser?.id || tx.paid_by === "Gabriel Utomo" || tx.paid_by === "Saya" || tx.paid_by === myDisplayName)
+                                ? myDisplayName
+                                : (tx.paid_by || myDisplayName)
+                            }</span>
                             <span> • </span>
                             <span>{tx.transaction_date}</span>
                             {tx.description && (

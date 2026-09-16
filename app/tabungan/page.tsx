@@ -144,9 +144,15 @@ export default function TabunganPage() {
             .from("couples")
             .select("id, name")
             .eq("id", activeCoupleId)
-            .maybeSingle();
-
-          if (cRow) setCouple(cRow);
+          if (cRow) {
+            let currentName = cRow.name;
+            if (currentName && currentName.includes("Gabriel Utomo")) {
+              currentName = currentName.replace("Gabriel Utomo", myName);
+              cRow.name = currentName;
+              supabase.from("couples").update({ name: currentName }).eq("id", cRow.id).then();
+            }
+            setCouple(cRow);
+          }
 
           // Partner
           const { data: pMembers } = await supabase

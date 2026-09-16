@@ -24,6 +24,7 @@ export default function PengaturanPage() {
 
   // Form Profile State
   const [editFullName, setEditFullName] = useState("");
+  const [editCoupleName, setEditCoupleName] = useState("");
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
   // PIN Vault State
@@ -84,7 +85,16 @@ export default function PengaturanPage() {
             .select("id, name")
             .eq("id", activeCoupleId)
             .maybeSingle();
-          if (cRow) setCouple(cRow);
+          if (cRow) {
+            let currentName = cRow.name;
+            if (currentName && currentName.includes("Gabriel Utomo")) {
+              currentName = currentName.replace("Gabriel Utomo", myName);
+              cRow.name = currentName;
+              supabase.from("couples").update({ name: currentName }).eq("id", cRow.id).then();
+            }
+            setCouple(cRow);
+            setEditCoupleName(cRow.name || `Dompet ${myName}`);
+          }
 
           const { data: pMembers } = await supabase
             .from("couple_members")
@@ -116,30 +126,74 @@ export default function PengaturanPage() {
     loadData();
   }, [router, supabase]);
 
-  // Save Name
+  // Save Name & Couple Name
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser || !editFullName.trim()) return;
 
+    const newName = editFullName.trim();
+    const oldName = profile?.full_name || "Gabriel Utomo";
+
     setIsUpdatingProfile(true);
     try {
+      // 1. Update public.profiles
       const { error } = await supabase
         .from("profiles")
         .upsert(
           {
             id: currentUser.id,
-            full_name: editFullName.trim(),
+            full_name: newName,
           },
           { onConflict: "id" }
         );
 
       if (error) throw error;
 
+      // 2. Sync Supabase Auth user metadata
+      try {
+        await supabase.auth.updateUser({
+          data: { full_name: newName, name: newName },
+        });
+      } catch (authErr) {
+        console.warn("Could not update auth user metadata:", authErr);
+      }
+
+      // 3. Sync or customize Couple / Dompet Name
+      let targetCoupleName = editCoupleName.trim();
+      if (couple?.id) {
+        if (!targetCoupleName || targetCoupleName.includes("Gabriel Utomo") || targetCoupleName === `Dompet ${oldName}` || targetCoupleName === "Dompet Bersama") {
+          targetCoupleName = targetCoupleName ? targetCoupleName.replace("Gabriel Utomo", newName) : `Dompet ${newName}`;
+          setEditCoupleName(targetCoupleName);
+        }
+
+        const { error: coupleErr } = await supabase
+          .from("couples")
+          .update({ name: targetCoupleName })
+          .eq("id", couple.id);
+
+        if (!coupleErr) {
+          setCouple((prev) => (prev ? { ...prev, name: targetCoupleName } : null));
+        }
+      }
+
+      // 4. Update past transactions in database
+      try {
+        await supabase
+          .from("transactions")
+          .update({
+            creator_name: newName,
+            paid_by: newName,
+          })
+          .eq("created_by", currentUser.id);
+      } catch (txErr) {
+        console.warn("Could not bulk update past transactions:", txErr);
+      }
+
       setProfile({
-        full_name: editFullName.trim(),
+        full_name: newName,
         avatar_url: profile?.avatar_url,
       });
-      showToast("Nama profil berhasil diperbarui!");
+      showToast("Nama profil dan dompet berhasil diperbarui!");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Gagal memperbarui profil.";
       alert(`Terjadi kesalahan: ${msg}`);
@@ -333,8 +387,24 @@ export default function PengaturanPage() {
                   required
                   value={editFullName}
                   onChange={(e) => setEditFullName(e.target.value)}
-                  className="w-full border-[3px] border-black rounded p-3 font-body-md font-bold focus:shadow-[3px_3px_0px_#000] focus:outline-none"
+                  className="w-full border-[3px] border-black rounded p-3 font-body-md font-bold focus:shadow-[3px_3px_0px_#000] focus:outline-none bg-white"
                 />
+              </div>
+
+              <div>
+                <label className="font-label-badge uppercase block mb-1 text-xs font-bold">
+                  Nama Dompet Bersama (Rekening Pasangan)
+                </label>
+                <input
+                  type="text"
+                  value={editCoupleName}
+                  onChange={(e) => setEditCoupleName(e.target.value)}
+                  placeholder="Contoh: Dompet Gabriel, Dompet Kami"
+                  className="w-full border-[3px] border-black rounded p-3 font-body-md font-bold focus:shadow-[3px_3px_0px_#000] focus:outline-none bg-white"
+                />
+                <span className="text-[11px] text-on-surface-variant font-bold block mt-1">
+                  Nama ini yang akan tampil di navbar atas, dompet, laporan, dan sidebar.
+                </span>
               </div>
 
               <button
@@ -342,7 +412,7 @@ export default function PengaturanPage() {
                 disabled={isUpdatingProfile}
                 className="px-6 py-3 bg-primary-container hover:bg-[#a6e6ff] text-black border-[3px] border-black rounded font-headline-sm uppercase font-black text-xs shadow-[3px_3px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer disabled:opacity-50"
               >
-                {isUpdatingProfile ? "Menyimpan..." : "Simpan Nama Profil"}
+                {isUpdatingProfile ? "Menyimpan..." : "Simpan Perubahan Profil & Dompet"}
               </button>
             </form>
           </div>

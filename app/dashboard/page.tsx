@@ -133,9 +133,15 @@ export default function DashboardPage() {
             .from("couples")
             .select("*")
             .eq("id", activeCoupleId)
-            .maybeSingle();
-
-          if (cRow) setCouple(cRow);
+          if (cRow) {
+            let currentName = cRow.name;
+            if (currentName && currentName.includes("Gabriel Utomo")) {
+              currentName = currentName.replace("Gabriel Utomo", myName);
+              cRow.name = currentName;
+              supabase.from("couples").update({ name: currentName }).eq("id", cRow.id).then();
+            }
+            setCouple(cRow);
+          }
 
           const { data: pMembers } = await supabase
             .from("couple_members")
@@ -186,9 +192,11 @@ export default function DashboardPage() {
                 t.type === "income"
                   ? "bg-primary-container"
                   : "bg-secondary-container",
-              paidBy: t.paid_by || (t.created_by === user.id ? myName : "Pasangan"),
+              paidBy: (t.created_by === user.id || t.paid_by === "Gabriel Utomo" || t.paid_by === "Saya" || t.paid_by === myName)
+                ? myName
+                : (t.paid_by || (partner ? partner.full_name : "Pasangan")),
               paidByBg:
-                t.paid_by === myName || t.created_by === user.id
+                t.paid_by === myName || t.created_by === user.id || t.paid_by === "Gabriel Utomo" || t.paid_by === "Saya"
                   ? "bg-[#38BDF8]"
                   : "bg-secondary-fixed",
               splitInfo:
