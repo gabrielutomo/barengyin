@@ -14,6 +14,7 @@ interface WalletTransaction {
   type: "income" | "expense";
   category_id?: string | null;
   paid_by?: string | null;
+  created_by?: string | null;
   transaction_date: string;
   created_at: string;
   description?: string | null;

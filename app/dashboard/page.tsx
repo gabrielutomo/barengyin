@@ -133,6 +133,8 @@ export default function DashboardPage() {
             .from("couples")
             .select("*")
             .eq("id", activeCoupleId)
+            .maybeSingle();
+
           if (cRow) {
             let currentName = cRow.name;
             if (currentName && currentName.includes("Gabriel Utomo")) {
