@@ -269,75 +269,87 @@ export function AppSidebar({
       {/* ========================================================================= */}
       {/* 2. MOBILE BOTTOM NAVIGATION BAR (Visible only on mobile screens < md:) */}
       {/* ========================================================================= */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-surface-container-lowest border-t-[3px] border-black z-50 flex items-center justify-around px-1 py-1 shadow-[0_-3px_0px_#000]">
+      {/* 2. MOBILE BOTTOM NAVIGATION BAR (Visible only on mobile screens < md:) */}
+      {/* ========================================================================= */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-surface-container-lowest border-t-[3px] border-black z-50 flex items-center justify-between px-1 py-1 shadow-[0_-3px_0px_#000]">
         {/* Mobile Nav 1: Dashboard */}
         <Link
           href="/dashboard"
           prefetch={true}
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded transition-all min-w-[54px] active:scale-95 ${
+          className={`flex-1 min-w-0 max-w-[20%] flex flex-col items-center justify-center py-1.5 px-0.5 rounded transition-all active:scale-95 border-2 ${
             currentActive === "dashboard"
-              ? "bg-primary-container text-black font-black border-2 border-black shadow-[2px_2px_0px_#000]"
-              : "text-on-surface font-bold"
+              ? "bg-primary-container text-black border-black shadow-[2px_2px_0px_#000]"
+              : "border-transparent text-on-surface hover:bg-surface-container-low"
           }`}
         >
-          <span className="material-symbols-outlined text-[20px]">grid_view</span>
-          <span className="text-[9px] uppercase font-headline-sm tracking-tighter">Beranda</span>
+          <span className="material-symbols-outlined text-[20px] leading-none shrink-0">grid_view</span>
+          <span className="text-[10px] font-black uppercase tracking-tight leading-none mt-1 truncate max-w-full text-center">
+            Beranda
+          </span>
         </Link>
 
         {/* Mobile Nav 2: Dompet */}
         <Link
           href="/dompet"
           prefetch={true}
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded transition-all min-w-[54px] active:scale-95 ${
+          className={`flex-1 min-w-0 max-w-[20%] flex flex-col items-center justify-center py-1.5 px-0.5 rounded transition-all active:scale-95 border-2 ${
             currentActive === "dompet"
-              ? "bg-primary-container text-black font-black border-2 border-black shadow-[2px_2px_0px_#000]"
-              : "text-on-surface font-bold"
+              ? "bg-primary-container text-black border-black shadow-[2px_2px_0px_#000]"
+              : "border-transparent text-on-surface hover:bg-surface-container-low"
           }`}
         >
-          <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
-          <span className="text-[9px] uppercase font-headline-sm tracking-tighter">Dompet</span>
+          <span className="material-symbols-outlined text-[20px] leading-none shrink-0">account_balance_wallet</span>
+          <span className="text-[10px] font-black uppercase tracking-tight leading-none mt-1 truncate max-w-full text-center">
+            Dompet
+          </span>
         </Link>
 
         {/* Mobile Nav 3: Transaksi */}
         <Link
           href="/transaksi"
           prefetch={true}
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded transition-all min-w-[54px] active:scale-95 ${
+          className={`flex-1 min-w-0 max-w-[20%] flex flex-col items-center justify-center py-1.5 px-0.5 rounded transition-all active:scale-95 border-2 ${
             currentActive === "transaksi"
-              ? "bg-primary-container text-black font-black border-2 border-black shadow-[2px_2px_0px_#000]"
-              : "text-on-surface font-bold"
+              ? "bg-primary-container text-black border-black shadow-[2px_2px_0px_#000]"
+              : "border-transparent text-on-surface hover:bg-surface-container-low"
           }`}
         >
-          <span className="material-symbols-outlined text-[20px]">receipt_long</span>
-          <span className="text-[9px] uppercase font-headline-sm tracking-tighter">Transaksi</span>
+          <span className="material-symbols-outlined text-[20px] leading-none shrink-0">receipt_long</span>
+          <span className="text-[10px] font-black uppercase tracking-tight leading-none mt-1 truncate max-w-full text-center">
+            Transaksi
+          </span>
         </Link>
 
         {/* Mobile Nav 4: Tabungan */}
         <Link
           href="/tabungan"
           prefetch={true}
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded transition-all min-w-[54px] active:scale-95 ${
+          className={`flex-1 min-w-0 max-w-[20%] flex flex-col items-center justify-center py-1.5 px-0.5 rounded transition-all active:scale-95 border-2 ${
             currentActive === "tabungan"
-              ? "bg-primary-container text-black font-black border-2 border-black shadow-[2px_2px_0px_#000]"
-              : "text-on-surface font-bold"
+              ? "bg-primary-container text-black border-black shadow-[2px_2px_0px_#000]"
+              : "border-transparent text-on-surface hover:bg-surface-container-low"
           }`}
         >
-          <span className="material-symbols-outlined text-[20px]">savings</span>
-          <span className="text-[9px] uppercase font-headline-sm tracking-tighter">Tabungan</span>
+          <span className="material-symbols-outlined text-[20px] leading-none shrink-0">savings</span>
+          <span className="text-[10px] font-black uppercase tracking-tight leading-none mt-1 truncate max-w-full text-center">
+            Tabungan
+          </span>
         </Link>
 
         {/* Mobile Nav 5: Menu Drawer Toggle */}
         <button
           type="button"
           onClick={() => setMobileMenuOpen(true)}
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded transition-all min-w-[54px] cursor-pointer active:scale-95 ${
+          className={`flex-1 min-w-0 max-w-[20%] flex flex-col items-center justify-center py-1.5 px-0.5 rounded transition-all cursor-pointer active:scale-95 border-2 ${
             ["anggaran", "laporan", "scan", "pasangan", "pengaturan"].includes(currentActive)
-              ? "bg-[#D4F34A] text-black font-black border-2 border-black shadow-[2px_2px_0px_#000]"
-              : "text-on-surface font-bold"
+              ? "bg-[#D4F34A] text-black border-black shadow-[2px_2px_0px_#000]"
+              : "border-transparent text-on-surface hover:bg-surface-container-low"
           }`}
         >
-          <span className="material-symbols-outlined text-[20px]">widgets</span>
-          <span className="text-[9px] uppercase font-headline-sm tracking-tighter">Menu</span>
+          <span className="material-symbols-outlined text-[20px] leading-none shrink-0">widgets</span>
+          <span className="text-[10px] font-black uppercase tracking-tight leading-none mt-1 truncate max-w-full text-center">
+            Menu
+          </span>
         </button>
       </nav>
 
