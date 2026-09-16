@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { AppSidebar } from "@/components/app-sidebar";
+import { CategoryPieChart } from "@/components/category-pie-chart";
 
 interface Transaction {
   id: string;
@@ -12,12 +13,14 @@ interface Transaction {
   amount: number;
   type: "expense" | "income";
   category: string;
+  rawCategory?: string;
   categoryIcon: string;
   categoryBg: string;
   paidBy: string;
   paidByBg: string;
   splitInfo: string;
   date: string;
+  rawDate?: string;
   creatorName?: string | null;
 }
 
@@ -164,6 +167,7 @@ export default function DashboardPage() {
               amount: Number(t.amount),
               type: t.type as "expense" | "income",
               category: (t.category_id || "UMUM").toUpperCase(),
+              rawCategory: t.category_id || "Umum",
               categoryIcon:
                 t.type === "income"
                   ? "payments"
@@ -171,6 +175,12 @@ export default function DashboardPage() {
                   ? "directions_car"
                   : t.category_id === "Groceries & Rumah"
                   ? "shopping_bag"
+                  : t.category_id === "Hiburan & Nonton"
+                  ? "live_tv"
+                  : t.category_id === "Tagihan & Utilitas"
+                  ? "receipt"
+                  : t.category_id === "Kesehatan & Skincare"
+                  ? "medical_services"
                   : "restaurant",
               categoryBg:
                 t.type === "income"
@@ -188,6 +198,7 @@ export default function DashboardPage() {
                   ? "Split: 60:40"
                   : "Ditanggung Penuh",
               date: t.transaction_date || "Hari ini",
+              rawDate: t.transaction_date,
               creatorName: t.creator_name || myName,
             }));
 
@@ -293,6 +304,143 @@ export default function DashboardPage() {
 
     return { myPaid, partnerPaid, myPct, partnerPct };
   }, [transactions, myDisplayName]);
+
+  // Real 6-Month dynamic trend calculation from actual transactions
+  const sixMonthsData = useMemo(() => {
+    const monthsNames = [
+      "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+      "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
+    ];
+
+    const result = [];
+    const now = new Date();
+
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const year = d.getFullYear();
+      const monthNum = d.getMonth();
+      const yearMonthKey = `${year}-${String(monthNum + 1).padStart(2, "0")}`;
+      const monthLabel = monthsNames[monthNum];
+      const isCurrentMonth = i === 0;
+
+      // Filter real transactions matching this month
+      const monthTxs = transactions.filter((t) => {
+        const txDate = t.rawDate || t.date;
+        return typeof txDate === "string" && txDate.startsWith(yearMonthKey);
+      });
+
+      const expense = monthTxs
+        .filter((t) => t.type === "expense")
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      const income = monthTxs
+        .filter((t) => t.type === "income")
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      const totalFlow = expense + income;
+
+      result.push({
+        yearMonthKey,
+        month: monthLabel,
+        year,
+        isCurrentMonth,
+        expense,
+        income,
+        totalFlow,
+      });
+    }
+
+    // Determine max value to scale bar heights accurately
+    const maxVal = Math.max(...result.map((m) => Math.max(m.expense, m.income)), 1);
+
+    return result.map((m) => {
+      const expPercent = m.expense > 0 ? Math.max(8, Math.round((m.expense / maxVal) * 100)) : 0;
+      const incPercent = m.income > 0 ? Math.max(8, Math.round((m.income / maxVal) * 100)) : 0;
+
+      let displayTotal = "Rp 0";
+      if (m.expense >= 1000000000) {
+        displayTotal = `${(m.expense / 1000000000).toFixed(1)}M`;
+      } else if (m.expense >= 1000000) {
+        displayTotal = `${(m.expense / 1000000).toFixed(1)}jt`;
+      } else if (m.expense >= 1000) {
+        displayTotal = `${Math.round(m.expense / 1000)}rb`;
+      } else if (m.expense > 0) {
+        displayTotal = `${m.expense}`;
+      }
+
+      return {
+        ...m,
+        expPercent,
+        incPercent,
+        displayTotal,
+      };
+    });
+  }, [transactions]);
+
+  // Dynamic 6-month comparison insight
+  const trendInsight = useMemo(() => {
+    if (sixMonthsData.length < 2) return "Mulai catat transaksi untuk melihat analisis tren finansial berdua.";
+    const currentMonth = sixMonthsData[sixMonthsData.length - 1];
+    const prevMonth = sixMonthsData[sixMonthsData.length - 2];
+
+    if (currentMonth.expense === 0 && prevMonth.expense === 0) {
+      return "Belum ada catatan pengeluaran di bulan ini dan bulan lalu. Semua transaksi baru akan langsung dianalisis otomatis.";
+    }
+
+    if (prevMonth.expense === 0) {
+      return `Pengeluaran bulan ${currentMonth.month} tercatat Rp ${currentMonth.expense.toLocaleString("id-ID")}. Catatan pengeluaran bulan lalu kosong.`;
+    }
+
+    const diff = currentMonth.expense - prevMonth.expense;
+    const pctChange = Math.abs(Math.round((diff / prevMonth.expense) * 100));
+
+    if (diff < 0) {
+      return `Pengeluaran bulan ini turun ${pctChange}% dibanding bulan ${prevMonth.month}. Alokasi kas kalian berdua terkendali dengan sangat baik!`;
+    } else if (diff > 0) {
+      return `Pengeluaran bulan ini naik ${pctChange}% dibanding bulan ${prevMonth.month}. Pastikan selalu pantau batas anggaran kategori.`;
+    } else {
+      return `Pengeluaran bulan ini stabil sama dengan bulan ${prevMonth.month} (Rp ${currentMonth.expense.toLocaleString("id-ID")}).`;
+    }
+  }, [sixMonthsData]);
+
+  // Category Breakdown for the Pie Chart
+  const categoryBreakdownData = useMemo(() => {
+    const now = new Date();
+    const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+    const currentMonthExpenses = transactions.filter((t) => {
+      if (t.type !== "expense") return false;
+      const txDate = t.rawDate || t.date;
+      return typeof txDate === "string" && txDate.startsWith(currentYearMonth);
+    });
+
+    const isCurrentMonthActive = currentMonthExpenses.length > 0;
+    const targetExpenses = isCurrentMonthActive
+      ? currentMonthExpenses
+      : transactions.filter((t) => t.type === "expense");
+
+    const map: Record<string, number> = {};
+
+    targetExpenses.forEach((t) => {
+      const raw = t.rawCategory || t.category || "Lainnya";
+      // Capitalize nicely
+      const cat = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+      map[cat] = (map[cat] || 0) + t.amount;
+    });
+
+    const list = Object.entries(map).map(([name, amount]) => ({
+      name,
+      amount,
+    }));
+
+    const total = list.reduce((sum, item) => sum + item.amount, 0);
+
+    return {
+      list,
+      total,
+      periodLabel: isCurrentMonthActive ? "Bulan Ini" : "Semua Waktu",
+    };
+  }, [transactions]);
 
   return (
     <div className="bg-surface font-body-md text-on-surface antialiased min-h-screen selection:bg-primary-container selection:text-black">
@@ -492,9 +640,14 @@ export default function DashboardPage() {
               <div className="p-4 border-b-[3px] border-black bg-surface-container-low flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-xl">bar_chart</span>
-                  <h2 className="font-headline-sm uppercase font-black text-sm">
-                    Tren Pengeluaran vs Tabungan (6 Bulan)
-                  </h2>
+                  <div>
+                    <h2 className="font-headline-sm uppercase font-black text-sm leading-tight">
+                      Tren Pengeluaran vs Pemasukan (6 Bulan)
+                    </h2>
+                    <span className="font-label-badge text-[9px] uppercase font-black text-on-surface-variant">
+                      Kalkulasi Data Riil Transaksi
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-3 text-xs font-bold">
                   <div className="flex items-center gap-1.5">
@@ -503,12 +656,12 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-3 h-3 bg-primary-container border border-black inline-block"></span>
-                    <span>Tabungan</span>
+                    <span>Pemasukan</span>
                   </div>
                 </div>
               </div>
 
-              <div className="p-6 space-y-6">
+              <div className="p-5 sm:p-6 space-y-6">
                 <div className="w-full h-56 pt-6 flex items-end justify-between gap-2 border-b-[3px] border-black relative">
                   <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20">
                     <div className="w-full border-b border-dashed border-black"></div>
@@ -516,34 +669,51 @@ export default function DashboardPage() {
                     <div className="w-full border-b border-dashed border-black"></div>
                   </div>
 
-                  {[
-                    { month: "Mei", exp: "h-28", sav: "h-16", total: "10.2M" },
-                    { month: "Jun", exp: "h-36", sav: "h-20", total: "12.5M" },
-                    { month: "Jul", exp: "h-40", sav: "h-14", total: "14.1M" },
-                    { month: "Agu", exp: "h-32", sav: "h-24", total: "11.8M" },
-                    { month: "Sep", exp: "h-38", sav: "h-22", total: "13.0M" },
-                    {
-                      month: "Okt ★",
-                      exp: "h-32",
-                      sav: "h-36",
-                      total: "11.2M",
-                      active: true,
-                    },
-                  ].map((bar, i) => (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-1 z-10 group">
+                  {sixMonthsData.map((bar) => (
+                    <div
+                      key={bar.yearMonthKey}
+                      className="flex-1 flex flex-col items-center gap-1 z-10 group relative"
+                    >
+                      {/* Floating tooltip on hover */}
+                      <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-black text-white text-[10px] py-1 px-2.5 rounded border border-white/20 whitespace-nowrap z-30 shadow-[2px_2px_0px_rgba(0,0,0,0.5)]">
+                        <div>Keluar: Rp {bar.expense.toLocaleString("id-ID")}</div>
+                        <div>Masuk: Rp {bar.income.toLocaleString("id-ID")}</div>
+                      </div>
+
                       <span
-                        className={`font-label-badge text-[10px] font-bold ${
-                          bar.active ? "bg-[#FDE047] px-1 border border-black shadow-[1px_1px_0px_#000]" : ""
+                        className={`font-label-badge text-[9px] sm:text-[10px] font-bold ${
+                          bar.isCurrentMonth
+                            ? "bg-[#FDE047] px-1 border border-black shadow-[1px_1px_0px_#000]"
+                            : "text-on-surface-variant"
                         }`}
                       >
-                        {bar.total}
+                        {bar.displayTotal}
                       </span>
-                      <div className="w-full max-w-[36px] flex items-end gap-0.5">
-                        <div className={`w-1/2 bg-secondary-container border-[2px] border-black ${bar.exp}`} />
-                        <div className={`w-1/2 bg-primary-container border-[2px] border-black ${bar.sav}`} />
+                      <div className="w-full max-w-[36px] h-36 flex items-end gap-0.5 justify-center">
+                        <div
+                          className="w-1/2 bg-secondary-container border-[2px] border-black transition-all duration-300 group-hover:opacity-90 rounded-t-[2px]"
+                          style={{
+                            height: `${bar.expPercent}%`,
+                            minHeight: bar.expense > 0 ? "5px" : "0px",
+                          }}
+                          title={`Pengeluaran: Rp ${bar.expense.toLocaleString("id-ID")}`}
+                        />
+                        <div
+                          className="w-1/2 bg-primary-container border-[2px] border-black transition-all duration-300 group-hover:opacity-90 rounded-t-[2px]"
+                          style={{
+                            height: `${bar.incPercent}%`,
+                            minHeight: bar.income > 0 ? "5px" : "0px",
+                          }}
+                          title={`Pemasukan: Rp ${bar.income.toLocaleString("id-ID")}`}
+                        />
                       </div>
-                      <span className={`font-label-badge text-[10px] uppercase font-bold mt-1 ${bar.active ? "text-secondary font-black" : ""}`}>
+                      <span
+                        className={`font-label-badge text-[10px] uppercase font-bold mt-1 ${
+                          bar.isCurrentMonth ? "text-secondary font-black" : "text-on-surface"
+                        }`}
+                      >
                         {bar.month}
+                        {bar.isCurrentMonth ? " ★" : ""}
                       </span>
                     </div>
                   ))}
@@ -551,9 +721,9 @@ export default function DashboardPage() {
 
                 {/* Insight Callout */}
                 <div className="p-3.5 bg-[#ebe1ff] border-[2px] border-black shadow-[2px_2px_0px_#000] rounded flex items-center gap-3">
-                  <span className="material-symbols-outlined text-primary text-xl">insights</span>
+                  <span className="material-symbols-outlined text-primary text-xl shrink-0">insights</span>
                   <p className="font-body-sm text-xs text-on-surface font-bold">
-                    💡 <b>Executive Insight:</b> Alokasi tabungan bulan ini meningkat 18% dibanding bulan lalu. Kondisi finansial sangat sehat!
+                    💡 <b>Executive Insight:</b> {trendInsight}
                   </p>
                 </div>
               </div>
@@ -633,7 +803,14 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* 4. RECENT TRANSACTIONS (VIEW ONLY FEED) */}
+          {/* 4. PIE CHART: DISTRIBUSI PENGELUARAN PER KATEGORI */}
+          <CategoryPieChart
+            data={categoryBreakdownData.list}
+            totalExpense={categoryBreakdownData.total}
+            periodLabel={categoryBreakdownData.periodLabel}
+          />
+
+          {/* 5. RECENT TRANSACTIONS (VIEW ONLY FEED) */}
           <div className="bg-surface-container-lowest border-[4px] border-black shadow-[6px_6px_0px_#000] rounded-xl overflow-hidden">
             <div className="p-4 border-b-[3px] border-black bg-surface-container-low flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
