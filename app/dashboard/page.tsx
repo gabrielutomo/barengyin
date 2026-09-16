@@ -243,7 +243,7 @@ export default function DashboardPage() {
           // 4. Savings Goals
           const { data: goalRows } = await supabase
             .from("savings_goals")
-            .select("id, name, icon, target_amount, current_amount")
+            .select("*")
             .eq("couple_id", activeCoupleId);
 
           if (goalRows && goalRows.length > 0) {
@@ -533,7 +533,7 @@ export default function DashboardPage() {
               </Link>
               <Link
                 href="/dompet"
-                className="px-3.5 py-2 bg-[#A855F7] hover:bg-[#9333ea] text-white border-2 border-black rounded font-headline-sm uppercase text-xs font-black shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5"
+                className="px-3.5 py-2 bg-[#7E22CE] hover:bg-[#6B21A8] text-white border-2 border-black rounded font-headline-sm uppercase text-xs font-black shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-base">account_balance_wallet</span>
                 <span>Saldo Dompet</span>
@@ -701,7 +701,7 @@ export default function DashboardPage() {
                       </span>
                       <div className="w-full max-w-[36px] h-36 flex items-end gap-0.5 justify-center">
                         <div
-                          className="w-1/2 bg-secondary-container border-[2px] border-black transition-all duration-300 group-hover:opacity-90 rounded-t-[2px]"
+                          className="w-1/2 bg-secondary-container border-[2px] border-black transition-opacity duration-200 group-hover:opacity-90 rounded-t-[2px]"
                           style={{
                             height: `${bar.expPercent}%`,
                             minHeight: bar.expense > 0 ? "5px" : "0px",
@@ -709,7 +709,7 @@ export default function DashboardPage() {
                           title={`Pengeluaran: Rp ${bar.expense.toLocaleString("id-ID")}`}
                         />
                         <div
-                          className="w-1/2 bg-primary-container border-[2px] border-black transition-all duration-300 group-hover:opacity-90 rounded-t-[2px]"
+                          className="w-1/2 bg-primary-container border-[2px] border-black transition-opacity duration-200 group-hover:opacity-90 rounded-t-[2px]"
                           style={{
                             height: `${bar.incPercent}%`,
                             minHeight: bar.income > 0 ? "5px" : "0px",
