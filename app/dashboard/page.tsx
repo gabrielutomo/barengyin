@@ -485,6 +485,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <Link
               href="/laporan"
+              prefetch={false}
               className="font-label-badge text-xs uppercase px-2.5 sm:px-3 py-1.5 bg-[#D4F34A] hover:bg-[#c2e439] text-on-surface border-[2px] border-black shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1 font-black rounded-sm"
             >
               <span className="material-symbols-outlined text-[16px]">picture_as_pdf</span>
@@ -494,6 +495,7 @@ export default function DashboardPage() {
 
             <Link
               href="/pengaturan"
+              prefetch={false}
               className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-surface-container border-2 border-black flex items-center justify-center font-bold text-xs shadow-[2px_2px_0px_#000] hover:bg-slate-200"
               title="Pengaturan Akun"
             >
@@ -524,6 +526,7 @@ export default function DashboardPage() {
             <div className="flex flex-wrap items-center gap-2 shrink-0">
               <Link
                 href="/transaksi"
+                prefetch={false}
                 className="px-3.5 py-2 bg-primary-container hover:bg-[#a6e6ff] text-black border-2 border-black rounded font-headline-sm uppercase text-xs font-black shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-base">receipt_long</span>
@@ -531,6 +534,7 @@ export default function DashboardPage() {
               </Link>
               <Link
                 href="/scan-struk"
+                prefetch={false}
                 className="px-3.5 py-2 bg-[#FDE047] hover:bg-[#fae870] text-black border-2 border-black rounded font-headline-sm uppercase text-xs font-black shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-base">photo_camera</span>
@@ -538,6 +542,7 @@ export default function DashboardPage() {
               </Link>
               <Link
                 href="/dompet"
+                prefetch={false}
                 className="px-3.5 py-2 bg-[#7E22CE] hover:bg-[#6B21A8] text-white border-2 border-black rounded font-headline-sm uppercase text-xs font-black shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-base">account_balance_wallet</span>
@@ -545,6 +550,7 @@ export default function DashboardPage() {
               </Link>
               <Link
                 href="/tabungan"
+                prefetch={false}
                 className="px-3.5 py-2 bg-[#D4F34A] hover:bg-[#c2e439] text-black border-2 border-black rounded font-headline-sm uppercase text-xs font-black shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-base">savings</span>
@@ -572,7 +578,7 @@ export default function DashboardPage() {
               </div>
               <div className="pt-2 border-t border-black/15 flex items-center justify-between text-xs font-bold">
                 <span className="text-[#0369a1]">Kas Aktif Bersama</span>
-                <Link href="/dompet" className="text-xs underline font-headline-sm uppercase font-black">
+                <Link href="/dompet" prefetch={false} aria-label="Kelola Saldo Dompet Bersama" className="text-xs underline font-headline-sm uppercase font-black">
                   Kelola &rarr;
                 </Link>
               </div>
@@ -595,7 +601,7 @@ export default function DashboardPage() {
               </div>
               <div className="pt-2 border-t border-black/15 flex items-center justify-between text-xs font-bold">
                 <span className="text-[#15803d]">Top-up &amp; Setoran Rutin</span>
-                <Link href="/transaksi" className="text-xs underline font-headline-sm uppercase font-black">
+                <Link href="/transaksi" prefetch={false} aria-label="Rincian Pemasukan Bulan Ini" className="text-xs underline font-headline-sm uppercase font-black">
                   Rincian &rarr;
                 </Link>
               </div>
@@ -618,7 +624,7 @@ export default function DashboardPage() {
               </div>
               <div className="pt-2 border-t border-black/15 flex items-center justify-between text-xs font-bold">
                 <span className="text-secondary">{transactions.filter((t) => t.type === "expense").length} transaksi</span>
-                <Link href="/transaksi" className="text-xs underline font-headline-sm uppercase font-black">
+                <Link href="/transaksi" prefetch={false} aria-label="Rincian Pengeluaran Bulan Ini" className="text-xs underline font-headline-sm uppercase font-black">
                   Rincian &rarr;
                 </Link>
               </div>
@@ -641,7 +647,7 @@ export default function DashboardPage() {
               </div>
               <div className="pt-2 border-t border-black/15 flex items-center justify-between text-xs font-bold">
                 <span className="text-[#854d0e]">{savingsGoals.length} target impian</span>
-                <Link href="/tabungan" className="text-xs underline font-headline-sm uppercase font-black">
+                <Link href="/tabungan" prefetch={false} aria-label="Kelola Target Tabungan" className="text-xs underline font-headline-sm uppercase font-black">
                   Kelola &rarr;
                 </Link>
               </div>
@@ -753,7 +759,7 @@ export default function DashboardPage() {
                     <span className="material-symbols-outlined text-primary">favorite</span>
                     <span>Rasio Belanja Berdua</span>
                   </h3>
-                  <Link href="/laporan" className="text-xs font-headline-sm uppercase font-black text-primary underline">
+                  <Link href="/laporan" prefetch={false} className="text-xs font-headline-sm uppercase font-black text-primary underline">
                     Laporan Lengkap &rarr;
                   </Link>
                 </div>
@@ -790,7 +796,7 @@ export default function DashboardPage() {
                     <span className="material-symbols-outlined text-primary">pie_chart</span>
                     <span>Status Anggaran Kategori</span>
                   </h3>
-                  <Link href="/anggaran" className="text-xs font-headline-sm uppercase font-black text-primary underline">
+                  <Link href="/anggaran" prefetch={false} className="text-xs font-headline-sm uppercase font-black text-primary underline">
                     Kelola Anggaran &rarr;
                   </Link>
                 </div>
@@ -837,6 +843,7 @@ export default function DashboardPage() {
 
               <Link
                 href="/transaksi"
+                prefetch={false}
                 className="px-3.5 py-1.5 bg-[#D4F34A] hover:bg-[#c2e439] text-black border-2 border-black rounded font-headline-sm uppercase text-xs font-black shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1.5"
               >
                 <span>Lihat Semua &amp; Catat Transaksi Baru</span>
@@ -851,6 +858,7 @@ export default function DashboardPage() {
                 </p>
                 <Link
                   href="/transaksi"
+                  prefetch={false}
                   className="inline-block px-4 py-2 bg-primary-container text-black border-2 border-black rounded font-headline-sm uppercase font-black text-xs shadow-[2px_2px_0px_#000]"
                 >
                   + Mulai Catat di Halaman Transaksi
@@ -894,7 +902,7 @@ export default function DashboardPage() {
 
             <div className="p-3.5 sm:p-4 bg-surface-container-low flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-bold text-on-surface-variant">
               <span>Halaman transaksi khusus mendukung Tambah, Edit, Hapus, Pencarian, &amp; Filter lengkap.</span>
-              <Link href="/transaksi" className="text-primary uppercase font-headline-sm font-black underline hover:text-black shrink-0">
+              <Link href="/transaksi" prefetch={false} className="text-primary uppercase font-headline-sm font-black underline hover:text-black shrink-0">
                 Buka Transaksi &rarr;
               </Link>
             </div>
