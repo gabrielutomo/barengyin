@@ -184,6 +184,7 @@ export default function TabunganPage() {
             setGoals(
               goalRows.map((g) => ({
                 ...g,
+                icon: g.icon || "savings",
                 target_amount: Number(g.target_amount),
                 current_amount: Number(g.current_amount),
               }))
@@ -244,7 +245,7 @@ export default function TabunganPage() {
     try {
       if (modalMode === "add") {
         // CREATE
-        const newGoal = {
+        const newGoal: Record<string, unknown> = {
           couple_id: couple.id,
           name: formName.trim(),
           icon: formIcon,
@@ -258,25 +259,66 @@ export default function TabunganPage() {
           updater_name: myDisplayName,
         };
 
-        const { data: inserted, error: insertErr } = await supabase
+        let { data: inserted, error: insertErr } = await supabase
           .from("savings_goals")
           .insert(newGoal)
           .select("*")
           .single();
 
+        // Fallback jika database Supabase belum di-patch kolom created_by atau icon
+        if (
+          insertErr &&
+          (insertErr.message?.includes("created_by") ||
+            insertErr.message?.includes("icon") ||
+            insertErr.code === "PGRST204")
+        ) {
+          delete newGoal.created_by;
+          delete newGoal.icon;
+          const retry = await supabase
+            .from("savings_goals")
+            .insert(newGoal)
+            .select("*")
+            .single();
+          inserted = retry.data;
+          insertErr = retry.error;
+        }
+
         if (insertErr) throw insertErr;
 
         const createdItem: SavingsGoalItem = {
           ...inserted,
+          icon: inserted.icon || formIcon || "savings",
           target_amount: Number(inserted.target_amount),
           current_amount: Number(inserted.current_amount),
         };
+
+        // Jika ada setoran awal, simpan juga ke riwayat kontribusi
+        if (numInitial && numInitial > 0 && createdItem.id) {
+          try {
+            const initialContrib: Record<string, unknown> = {
+              savings_goal_id: createdItem.id,
+              profile_id: currentUser.id,
+              contributor_name: myDisplayName,
+              notes: "Setoran awal pembuatan target",
+              amount: numInitial,
+            };
+            const { error: scErr } = await supabase
+              .from("savings_contributions")
+              .insert(initialContrib);
+            if (scErr && (scErr.message?.includes("notes") || scErr.code === "PGRST204")) {
+              delete initialContrib.notes;
+              await supabase.from("savings_contributions").insert(initialContrib);
+            }
+          } catch {
+            // graceful
+          }
+        }
 
         setGoals([createdItem, ...goals]);
         showToast(`Target tabungan "${formName}" berhasil dibuat oleh ${myDisplayName}!`);
       } else if (modalMode === "edit" && editId) {
         // UPDATE
-        const updateGoal = {
+        const updateGoal: Record<string, unknown> = {
           name: formName.trim(),
           icon: formIcon,
           target_amount: numTarget,
@@ -286,10 +328,23 @@ export default function TabunganPage() {
           updated_at: new Date().toISOString(),
         };
 
-        const { error: updateErr } = await supabase
+        let { error: updateErr } = await supabase
           .from("savings_goals")
           .update(updateGoal)
           .eq("id", editId);
+
+        // Fallback jika database Supabase belum memiliki kolom icon
+        if (
+          updateErr &&
+          (updateErr.message?.includes("icon") || updateErr.code === "PGRST204")
+        ) {
+          delete updateGoal.icon;
+          const retry = await supabase
+            .from("savings_goals")
+            .update(updateGoal)
+            .eq("id", editId);
+          updateErr = retry.error;
+        }
 
         if (updateErr) throw updateErr;
 
@@ -299,6 +354,7 @@ export default function TabunganPage() {
               ? {
                   ...g,
                   ...updateGoal,
+                  icon: formIcon || g.icon || "savings",
                   status: g.current_amount >= numTarget ? "achieved" : "active",
                 }
               : g
@@ -355,13 +411,22 @@ export default function TabunganPage() {
 
       // 2. Insert contribution history
       try {
-        await supabase.from("savings_contributions").insert({
+        const contribPayload: Record<string, unknown> = {
           savings_goal_id: depositGoal.id,
           profile_id: currentUser.id,
           contributor_name: depositContributor,
           notes: depositNotes.trim() || null,
           amount: numDeposit,
-        });
+        };
+
+        const { error: cErr } = await supabase
+          .from("savings_contributions")
+          .insert(contribPayload);
+
+        if (cErr && (cErr.message?.includes("notes") || cErr.code === "PGRST204")) {
+          delete contribPayload.notes;
+          await supabase.from("savings_contributions").insert(contribPayload);
+        }
       } catch {
         // graceful if table doesn't have all columns yet
       }

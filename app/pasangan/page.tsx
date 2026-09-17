@@ -89,11 +89,32 @@ export default function PasanganPage() {
 
       const activeCoupleId = members?.[0]?.couple_id;
       if (activeCoupleId) {
-        const { data: cRow } = await supabase
-          .from("couples")
-          .select("*")
-          .eq("id", activeCoupleId)
-          .maybeSingle();
+        // Parallelize fetching couple, partner, and invite token to avoid waterfall
+        const [
+          { data: cRow },
+          { data: pMembers },
+          { data: existingInvite }
+        ] = await Promise.all([
+          supabase
+            .from("couples")
+            .select("*")
+            .eq("id", activeCoupleId)
+            .maybeSingle(),
+          supabase
+            .from("couple_members")
+            .select("profile_id")
+            .eq("couple_id", activeCoupleId)
+            .neq("profile_id", user.id)
+            .limit(1),
+          supabase
+            .from("couple_invites")
+            .select("invite_token")
+            .eq("couple_id", activeCoupleId)
+            .eq("status", "pending")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+        ]);
 
         if (cRow) {
           let currentName = cRow.name;
@@ -107,13 +128,6 @@ export default function PasanganPage() {
         }
 
         // Partner
-        const { data: pMembers } = await supabase
-          .from("couple_members")
-          .select("profile_id")
-          .eq("couple_id", activeCoupleId)
-          .neq("profile_id", user.id)
-          .limit(1);
-
         if (pMembers && pMembers.length > 0) {
           const { data: pProf } = await supabase
             .from("profiles")
@@ -124,15 +138,6 @@ export default function PasanganPage() {
         }
 
         // Generate or get active invite link
-        const { data: existingInvite } = await supabase
-          .from("couple_invites")
-          .select("invite_token")
-          .eq("couple_id", activeCoupleId)
-          .eq("status", "pending")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
         const baseUrl =
           process.env.NEXT_PUBLIC_APP_URL ||
           (typeof window !== "undefined" ? window.location.origin : "");
@@ -337,7 +342,7 @@ export default function PasanganPage() {
 
           <Link
             href="/dashboard"
-            prefetch={true}
+            prefetch={false}
             className="text-xs font-headline-sm uppercase font-black px-3 py-1.5 bg-white border-2 border-black rounded shadow-[2px_2px_0px_#000] hover:bg-slate-100 flex items-center gap-1"
           >
             <span className="material-symbols-outlined text-sm">arrow_back</span>
@@ -377,7 +382,7 @@ export default function PasanganPage() {
                   <div className="font-label-badge text-[10px] uppercase font-black px-1.5 py-0.5 bg-primary-container border border-black rounded inline-block mb-1">
                     Akun Kamu (Owner)
                   </div>
-                  <h3 className="font-headline-sm uppercase font-black text-base">{myDisplayName}</h3>
+                  <h2 className="font-headline-sm uppercase font-black text-base">{myDisplayName}</h2>
                   <p className="font-body-sm text-xs text-on-surface-variant font-semibold">
                     {currentUser?.email || "Pengelola Utama"}
                   </p>
@@ -393,9 +398,9 @@ export default function PasanganPage() {
                   <div className="font-label-badge text-[10px] uppercase font-black px-1.5 py-0.5 bg-secondary-container border border-black rounded inline-block mb-1">
                     Pasangan Kamu
                   </div>
-                  <h3 className="font-headline-sm uppercase font-black text-base">
+                  <h2 className="font-headline-sm uppercase font-black text-base">
                     {partner ? partner.full_name : "Belum Bergabung"}
-                  </h3>
+                  </h2>
                   <p className="font-body-sm text-xs text-on-surface-variant font-semibold">
                     {partner ? "Aktif tersinkronisasi" : "Atur PIN dan bagikan tautan undangan di bawah"}
                   </p>
@@ -538,9 +543,14 @@ export default function PasanganPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2">
+              <label htmlFor="invite-link-input" className="sr-only">
+                Tautan Undangan Pasangan
+              </label>
               <input
+                id="invite-link-input"
                 type="text"
                 readOnly
+                aria-label="Tautan undangan pasangan"
                 value={inviteLink || "Memuat tautan undangan..."}
                 className="flex-1 border-[3px] border-black rounded p-3 bg-white font-mono text-xs font-bold truncate focus:outline-none"
               />
@@ -560,7 +570,7 @@ export default function PasanganPage() {
               <button
                 type="button"
                 onClick={handleShareWhatsApp}
-                className="px-5 py-3 bg-[#22C55E] hover:bg-[#16a34a] text-white border-[3px] border-black rounded font-headline-sm uppercase font-black text-xs shadow-[3px_3px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                className="px-5 py-3 bg-[#22C55E] hover:bg-[#16a34a] text-black border-[3px] border-black rounded font-headline-sm uppercase font-black text-xs shadow-[3px_3px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-base">chat</span>
                 <span>Kirim via WhatsApp</span>

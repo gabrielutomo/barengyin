@@ -338,9 +338,13 @@ drop policy if exists "Budgets access" on public.budgets;
 create policy "Budgets access" on public.budgets for all
 using (auth.role() = 'authenticated');
 
--- 11. Savings Goals Policies
+-- 11. Savings Goals & Contributions Policies
 drop policy if exists "Savings goals access" on public.savings_goals;
 create policy "Savings goals access" on public.savings_goals for all
+using (auth.role() = 'authenticated');
+
+drop policy if exists "Savings contributions access" on public.savings_contributions;
+create policy "Savings contributions access" on public.savings_contributions for all
 using (auth.role() = 'authenticated');
 
 -- 12. Notifications Policies
