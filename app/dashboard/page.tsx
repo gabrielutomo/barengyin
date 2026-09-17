@@ -129,11 +129,34 @@ export default function DashboardPage() {
 
         const activeCoupleId = members?.[0]?.couple_id;
         if (activeCoupleId) {
-          const { data: cRow } = await supabase
-            .from("couples")
-            .select("*")
-            .eq("id", activeCoupleId)
-            .maybeSingle();
+          // Parallelize couple, partner member, transactions, and savings goals
+          const [
+            { data: cRow },
+            { data: pMembers },
+            { data: txRows },
+            { data: goalRows },
+          ] = await Promise.all([
+            supabase
+              .from("couples")
+              .select("*")
+              .eq("id", activeCoupleId)
+              .maybeSingle(),
+            supabase
+              .from("couple_members")
+              .select("profile_id")
+              .eq("couple_id", activeCoupleId)
+              .neq("profile_id", user.id)
+              .limit(1),
+            supabase
+              .from("transactions")
+              .select("*")
+              .eq("couple_id", activeCoupleId)
+              .order("transaction_date", { ascending: false }),
+            supabase
+              .from("savings_goals")
+              .select("*")
+              .eq("couple_id", activeCoupleId),
+          ]);
 
           if (cRow) {
             let currentName = cRow.name;
@@ -145,13 +168,6 @@ export default function DashboardPage() {
             setCouple(cRow);
           }
 
-          const { data: pMembers } = await supabase
-            .from("couple_members")
-            .select("profile_id")
-            .eq("couple_id", activeCoupleId)
-            .neq("profile_id", user.id)
-            .limit(1);
-
           if (pMembers && pMembers.length > 0) {
             const { data: pProf } = await supabase
               .from("profiles")
@@ -161,13 +177,7 @@ export default function DashboardPage() {
             if (pProf) setPartner(pProf);
           }
 
-          // 3. Transactions
-          const { data: txRows } = await supabase
-            .from("transactions")
-            .select("*")
-            .eq("couple_id", activeCoupleId)
-            .order("transaction_date", { ascending: false });
-
+          // 3. Transactions mapping
           if (txRows && txRows.length > 0) {
             const mapped: Transaction[] = txRows.map((t) => ({
               id: t.id,
@@ -241,11 +251,6 @@ export default function DashboardPage() {
           }
 
           // 4. Savings Goals
-          const { data: goalRows } = await supabase
-            .from("savings_goals")
-            .select("*")
-            .eq("couple_id", activeCoupleId);
-
           if (goalRows && goalRows.length > 0) {
             setSavingsGoals(
               goalRows.map((g) => ({
