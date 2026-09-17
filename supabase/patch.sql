@@ -21,19 +21,38 @@ alter table public.transactions add column if not exists updater_name text;
 alter table public.transactions add column if not exists updated_at timestamptz default timezone('utc'::text, now()) not null;
 
 -- 2. SAVINGS_GOALS TABLE
+alter table public.savings_goals add column if not exists icon text default 'savings';
+alter table public.savings_goals add column if not exists created_by uuid references public.profiles(id);
 alter table public.savings_goals add column if not exists creator_name text;
 alter table public.savings_goals add column if not exists updated_by uuid references public.profiles(id);
 alter table public.savings_goals add column if not exists updater_name text;
 alter table public.savings_goals add column if not exists updated_at timestamptz default timezone('utc'::text, now()) not null;
 
 -- 3. SAVINGS_CONTRIBUTIONS TABLE
+alter table public.savings_contributions add column if not exists notes text;
 alter table public.savings_contributions add column if not exists contributor_name text;
 
--- 4. COUPLES TABLE
+-- 4. RLS POLICIES FOR SAVINGS GOALS & CONTRIBUTIONS
+alter table public.savings_goals enable row level security;
+drop policy if exists "Savings goals access" on public.savings_goals;
+create policy "Savings goals access" on public.savings_goals for all
+to authenticated
+using (true)
+with check (true);
+
+alter table public.savings_contributions enable row level security;
+drop policy if exists "Savings contributions access" on public.savings_contributions;
+create policy "Savings contributions access" on public.savings_contributions for all
+to authenticated
+using (true)
+with check (true);
+
+-- 5. COUPLES TABLE
 alter table public.couples add column if not exists pin_hash text;
 
--- 5. PROFILES TABLE
+-- 6. PROFILES TABLE
 alter table public.profiles add column if not exists pin_hash text;
 
--- 6. RELOAD POSTGREST SCHEMA CACHE
+-- 7. RELOAD POSTGREST SCHEMA CACHE
 notify pgrst, 'reload schema';
+

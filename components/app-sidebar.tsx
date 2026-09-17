@@ -58,12 +58,12 @@ export function AppSidebar({
             <Logo href="/dashboard" size="sm" showBadge={false} />
           </div>
 
-          {/* Navigation Items with instant prefetching */}
+          {/* Navigation Items */}
           <nav className="flex flex-col p-3 gap-1.5">
             {/* 1. Dashboard */}
             <Link
               href="/dashboard"
-              prefetch={true}
+              prefetch={false}
               className={`flex items-center gap-3 px-3 py-2.5 transition-all text-left rounded cursor-pointer ${
                 currentActive === "dashboard"
                   ? "bg-primary-container text-on-surface font-black border-l-[5px] border-black shadow-[2px_2px_0px_#000000]"
@@ -81,7 +81,7 @@ export function AppSidebar({
             {/* 2. Dompet Bersama */}
             <Link
               href="/dompet"
-              prefetch={true}
+              prefetch={false}
               className={`flex items-center gap-3 px-3 py-2.5 transition-all text-left rounded cursor-pointer ${
                 currentActive === "dompet"
                   ? "bg-primary-container text-on-surface font-black border-l-[5px] border-black shadow-[2px_2px_0px_#000000]"
@@ -99,7 +99,7 @@ export function AppSidebar({
             {/* 3. Transaksi */}
             <Link
               href="/transaksi"
-              prefetch={true}
+              prefetch={false}
               className={`flex items-center gap-3 px-3 py-2.5 transition-all text-left rounded cursor-pointer ${
                 currentActive === "transaksi"
                   ? "bg-primary-container text-on-surface font-black border-l-[5px] border-black shadow-[2px_2px_0px_#000000]"
@@ -117,7 +117,7 @@ export function AppSidebar({
             {/* 4. Tabungan Bersama */}
             <Link
               href="/tabungan"
-              prefetch={true}
+              prefetch={false}
               className={`flex items-center gap-3 px-3 py-2.5 transition-all text-left rounded cursor-pointer ${
                 currentActive === "tabungan"
                   ? "bg-primary-container text-on-surface font-black border-l-[5px] border-black shadow-[2px_2px_0px_#000000]"
@@ -135,7 +135,7 @@ export function AppSidebar({
             {/* 5. Anggaran */}
             <Link
               href="/anggaran"
-              prefetch={true}
+              prefetch={false}
               className={`flex items-center gap-3 px-3 py-2.5 transition-all text-left rounded cursor-pointer ${
                 currentActive === "anggaran"
                   ? "bg-primary-container text-on-surface font-black border-l-[5px] border-black shadow-[2px_2px_0px_#000000]"
@@ -153,7 +153,7 @@ export function AppSidebar({
             {/* 6. Laporan */}
             <Link
               href="/laporan"
-              prefetch={true}
+              prefetch={false}
               className={`flex items-center gap-3 px-3 py-2.5 transition-all text-left rounded cursor-pointer ${
                 currentActive === "laporan"
                   ? "bg-primary-container text-on-surface font-black border-l-[5px] border-black shadow-[2px_2px_0px_#000000]"
@@ -171,7 +171,7 @@ export function AppSidebar({
             {/* 7. Scan Struk */}
             <Link
               href="/scan-struk"
-              prefetch={true}
+              prefetch={false}
               className={`flex items-center gap-3 px-3 py-2.5 transition-all text-left rounded cursor-pointer ${
                 currentActive === "scan"
                   ? "bg-primary-container text-on-surface font-black border-l-[5px] border-black shadow-[2px_2px_0px_#000000]"
@@ -189,7 +189,7 @@ export function AppSidebar({
             {/* 8. Pasangan */}
             <Link
               href="/pasangan"
-              prefetch={true}
+              prefetch={false}
               className={`flex items-center gap-3 px-3 py-2.5 transition-all text-left rounded cursor-pointer ${
                 currentActive === "pasangan"
                   ? "bg-primary-container text-on-surface font-black border-l-[5px] border-black shadow-[2px_2px_0px_#000000]"
@@ -207,7 +207,7 @@ export function AppSidebar({
             {/* 9. Pengaturan */}
             <Link
               href="/pengaturan"
-              prefetch={true}
+              prefetch={false}
               className={`flex items-center gap-3 px-3 py-2.5 transition-all text-left rounded cursor-pointer ${
                 currentActive === "pengaturan"
                   ? "bg-primary-container text-on-surface font-black border-l-[5px] border-black shadow-[2px_2px_0px_#000000]"
@@ -228,7 +228,7 @@ export function AppSidebar({
         <div className="p-3 border-t-[3px] border-black bg-surface-container-low">
           <Link
             href="/dompet"
-            prefetch={true}
+            prefetch={false}
             className="block p-3 border-[3px] border-black bg-surface-container-lowest shadow-[3px_3px_0px_#000000] rounded hover:translate-x-0.5 hover:translate-y-0.5 transition-all group"
           >
             <div className="flex items-center justify-between mb-1.5">
@@ -244,7 +244,7 @@ export function AppSidebar({
             </div>
             <div className="font-body-sm text-[11px] text-on-surface-variant truncate font-semibold mt-1">
               {isPartnerConnected ? (
-                <span className="text-[#22C55E] font-black flex items-center gap-1">
+                <span className="text-[#15803d] font-black flex items-center gap-1">
                   <span>✓</span>
                   <span className="truncate">Terhubung {partnerName ? `(${partnerName})` : ""}</span>
                 </span>
@@ -275,7 +275,7 @@ export function AppSidebar({
         {/* Mobile Nav 1: Dashboard */}
         <Link
           href="/dashboard"
-          prefetch={true}
+          prefetch={false}
           className={`flex-1 min-w-0 max-w-[20%] flex flex-col items-center justify-center py-1.5 px-0.5 rounded transition-all active:scale-95 border-2 ${
             currentActive === "dashboard"
               ? "bg-primary-container text-black border-black shadow-[2px_2px_0px_#000]"
@@ -291,7 +291,7 @@ export function AppSidebar({
         {/* Mobile Nav 2: Dompet */}
         <Link
           href="/dompet"
-          prefetch={true}
+          prefetch={false}
           className={`flex-1 min-w-0 max-w-[20%] flex flex-col items-center justify-center py-1.5 px-0.5 rounded transition-all active:scale-95 border-2 ${
             currentActive === "dompet"
               ? "bg-primary-container text-black border-black shadow-[2px_2px_0px_#000]"
@@ -307,7 +307,7 @@ export function AppSidebar({
         {/* Mobile Nav 3: Transaksi */}
         <Link
           href="/transaksi"
-          prefetch={true}
+          prefetch={false}
           className={`flex-1 min-w-0 max-w-[20%] flex flex-col items-center justify-center py-1.5 px-0.5 rounded transition-all active:scale-95 border-2 ${
             currentActive === "transaksi"
               ? "bg-primary-container text-black border-black shadow-[2px_2px_0px_#000]"
@@ -323,7 +323,7 @@ export function AppSidebar({
         {/* Mobile Nav 4: Tabungan */}
         <Link
           href="/tabungan"
-          prefetch={true}
+          prefetch={false}
           className={`flex-1 min-w-0 max-w-[20%] flex flex-col items-center justify-center py-1.5 px-0.5 rounded transition-all active:scale-95 border-2 ${
             currentActive === "tabungan"
               ? "bg-primary-container text-black border-black shadow-[2px_2px_0px_#000]"
@@ -386,7 +386,7 @@ export function AppSidebar({
                   <span className="font-label-badge text-[9px] uppercase px-1.5 py-0.5 bg-tertiary-container border border-black rounded-xs font-black">
                     DUO KAS
                   </span>
-                  <span className="text-[10px] font-black text-[#22C55E]">
+                  <span className="text-[10px] font-black text-[#15803d]">
                     {isPartnerConnected ? "SYNC AKTIF" : "BELUM TERHUBUNG"}
                   </span>
                 </div>
@@ -407,7 +407,7 @@ export function AppSidebar({
                 {/* Anggaran */}
                 <Link
                   href="/anggaran"
-                  prefetch={true}
+                  prefetch={false}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded border-2 border-black transition-all ${
                     currentActive === "anggaran"
@@ -422,7 +422,7 @@ export function AppSidebar({
                 {/* Laporan PDF */}
                 <Link
                   href="/laporan"
-                  prefetch={true}
+                  prefetch={false}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded border-2 border-black transition-all ${
                     currentActive === "laporan"
@@ -437,7 +437,7 @@ export function AppSidebar({
                 {/* Scan Struk AI */}
                 <Link
                   href="/scan-struk"
-                  prefetch={true}
+                  prefetch={false}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded border-2 border-black transition-all ${
                     currentActive === "scan"
@@ -452,7 +452,7 @@ export function AppSidebar({
                 {/* Pasangan */}
                 <Link
                   href="/pasangan"
-                  prefetch={true}
+                  prefetch={false}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded border-2 border-black transition-all ${
                     currentActive === "pasangan"
@@ -467,7 +467,7 @@ export function AppSidebar({
                 {/* Pengaturan */}
                 <Link
                   href="/pengaturan"
-                  prefetch={true}
+                  prefetch={false}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded border-2 border-black transition-all ${
                     currentActive === "pengaturan"
@@ -485,7 +485,7 @@ export function AppSidebar({
             <div className="pt-4 border-t-2 border-black flex flex-col gap-2">
               <Link
                 href="/dompet"
-                prefetch={true}
+                prefetch={false}
                 onClick={() => setMobileMenuOpen(false)}
                 className="w-full py-2.5 bg-[#D4F34A] border-2 border-black font-headline-sm text-xs uppercase font-black shadow-[2px_2px_0px_#000] rounded text-center block"
               >

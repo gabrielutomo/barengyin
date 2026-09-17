@@ -260,7 +260,7 @@ export default function ScanStrukPage() {
 
           <Link
             href="/transaksi"
-            prefetch={true}
+            prefetch={false}
             className="text-xs font-headline-sm uppercase font-black px-3 py-1.5 bg-white border-2 border-black rounded shadow-[2px_2px_0px_#000] hover:bg-slate-100 flex items-center gap-1"
           >
             <span className="hidden sm:inline">Daftar Transaksi</span>
