@@ -21,18 +21,6 @@
 > development dan evaluasi MVP, tetapi belum siap digunakan untuk menyimpan
 > data finansial produksi sebelum hardening RLS, endpoint, dan alur PIN selesai.
 
-## Preview
-
-<p align="center">
-  <img src="public/assets/landing_preview.png" alt="Landing page Barengyin" width="49%" />
-  <img src="public/assets/dashboard_preview.png" alt="Dashboard Barengyin" width="49%" />
-</p>
-
-<p align="center">
-  <img src="public/assets/login_preview.png" alt="Halaman masuk Barengyin" width="49%" />
-  <img src="public/assets/couple_illustration.png" alt="Ilustrasi pasangan Barengyin" width="40%" />
-</p>
-
 ## Mengapa Barengyin?
 
 Keuangan bersama sering tersebar di chat, catatan pribadi, dan ingatan
