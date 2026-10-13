@@ -171,6 +171,9 @@ function MasukForm() {
             data.user.user_metadata?.full_name || cleanEmail.split("@")[0];
           await ensureUserHasCouple(data.user.id, displayName);
         }
+        try {
+          sessionStorage.setItem("barengyin_prompt_space_after_login", "true");
+        } catch (_) {}
         const nextUrl = searchParams.get("next") || "/dashboard";
         router.push(nextUrl);
       }
@@ -283,6 +286,10 @@ function MasukForm() {
           payload.email.split("@")[0];
         await ensureUserHasCouple(data.user.id, displayName);
       }
+
+      try {
+        sessionStorage.setItem("barengyin_prompt_space_after_login", "true");
+      } catch (_) {}
 
       // 3. Direct to dashboard
       setTimeout(() => {
