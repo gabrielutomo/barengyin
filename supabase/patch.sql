@@ -53,6 +53,103 @@ alter table public.couples add column if not exists pin_hash text;
 -- 6. PROFILES TABLE
 alter table public.profiles add column if not exists pin_hash text;
 
--- 7. RELOAD POSTGREST SCHEMA CACHE
+-- ==========================================================
+-- 7. DUAL-SPACE (PERSONAL VS COUPLE) & AUTO-CAPTURE NOTIFICATION
+-- ==========================================================
+
+-- A. TRANSACTIONS: Scope & Notification Ingestion Fields
+alter table public.transactions add column if not exists scope text check (scope in ('couple', 'personal')) default 'couple';
+alter table public.transactions alter column couple_id drop not null;
+alter table public.transactions add column if not exists is_auto_captured boolean default false;
+alter table public.transactions add column if not exists source_app text;
+alter table public.transactions add column if not exists raw_notification_text text;
+
+-- B. WALLETS: Scope
+alter table public.wallets add column if not exists scope text check (scope in ('couple', 'personal')) default 'couple';
+alter table public.wallets alter column couple_id drop not null;
+
+-- C. BUDGETS: Scope
+alter table public.budgets add column if not exists scope text check (scope in ('couple', 'personal')) default 'couple';
+alter table public.budgets alter column couple_id drop not null;
+
+-- D. USER API KEYS (Untuk autentikasi cepat notifikasi mobile Android ke Ingestion Service)
+create table if not exists public.user_api_keys (
+  id uuid primary key default gen_random_uuid(),
+  profile_id uuid references public.profiles(id) on delete cascade not null,
+  api_key text unique not null,
+  name text default 'Mobile Notification Listener',
+  created_at timestamptz default timezone('utc'::text, now()) not null
+);
+
+alter table public.user_api_keys enable row level security;
+drop policy if exists "Users can manage own api keys" on public.user_api_keys;
+create policy "Users can manage own api keys" on public.user_api_keys for all
+to authenticated using (profile_id = auth.uid()) with check (profile_id = auth.uid());
+
+-- E. RLS POLICIES DUAL-SPACE (Isolasi data Personal vs Couple)
+drop policy if exists "Transactions access" on public.transactions;
+drop policy if exists "Transactions dual-space access" on public.transactions;
+create policy "Transactions dual-space access" on public.transactions for all
+to authenticated
+using (
+  (coalesce(scope, 'couple') = 'personal' and created_by = auth.uid())
+  or
+  (coalesce(scope, 'couple') = 'couple' and (
+    couple_id in (select couple_id from public.couple_members where profile_id = auth.uid())
+    or created_by = auth.uid()
+  ))
+)
+with check (
+  (coalesce(scope, 'couple') = 'personal' and created_by = auth.uid())
+  or
+  (coalesce(scope, 'couple') = 'couple' and (
+    couple_id in (select couple_id from public.couple_members where profile_id = auth.uid())
+    or created_by = auth.uid()
+  ))
+);
+
+drop policy if exists "Wallets access" on public.wallets;
+drop policy if exists "Wallets dual-space access" on public.wallets;
+create policy "Wallets dual-space access" on public.wallets for all
+to authenticated
+using (
+  (coalesce(scope, 'couple') = 'personal' and (owner_profile_id = auth.uid() or couple_id is null))
+  or
+  (coalesce(scope, 'couple') = 'couple' and couple_id in (
+    select couple_id from public.couple_members where profile_id = auth.uid()
+  ))
+)
+with check (
+  (coalesce(scope, 'couple') = 'personal' and (owner_profile_id = auth.uid() or couple_id is null))
+  or
+  (coalesce(scope, 'couple') = 'couple' and couple_id in (
+    select couple_id from public.couple_members where profile_id = auth.uid()
+  ))
+);
+
+drop policy if exists "Budgets access" on public.budgets;
+drop policy if exists "Budgets dual-space access" on public.budgets;
+create policy "Budgets dual-space access" on public.budgets for all
+to authenticated
+using (
+  (coalesce(scope, 'couple') = 'personal' and couple_id is null)
+  or
+  (coalesce(scope, 'couple') = 'couple' and couple_id in (
+    select couple_id from public.couple_members where profile_id = auth.uid()
+  ))
+)
+with check (
+  (coalesce(scope, 'couple') = 'personal' and couple_id is null)
+  or
+  (coalesce(scope, 'couple') = 'couple' and couple_id in (
+    select couple_id from public.couple_members where profile_id = auth.uid()
+  ))
+);
+
+-- Index baru untuk performa query scope
+create index if not exists idx_tx_scope_created on public.transactions (scope, created_by, transaction_date desc);
+create index if not exists idx_tx_pending on public.transactions (created_by, status) where status = 'pending_review';
+
+-- 8. RELOAD POSTGREST SCHEMA CACHE
 notify pgrst, 'reload schema';
 

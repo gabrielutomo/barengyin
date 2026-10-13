@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { AppSidebar } from "@/components/app-sidebar";
 import { CategoryPieChart } from "@/components/category-pie-chart";
+import { useSpace } from "@/lib/context/space-context";
+import { SpaceSwitcher } from "@/components/space-switcher";
+import { PendingNotificationsCard, PendingTransaction } from "@/components/pending-notifications-card";
 
 interface Transaction {
   id: string;
@@ -79,6 +82,7 @@ const DEFAULT_BUDGETS: BudgetCategory[] = [
 export default function DashboardPage() {
   const router = useRouter();
   const supabase = createClient();
+  const { space, isPersonal, isCouple } = useSpace();
 
   // User & Couple state
   const [currentUser, setCurrentUser] = useState<{ id: string; email?: string } | null>(null);
@@ -91,6 +95,7 @@ export default function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<BudgetCategory[]>(DEFAULT_BUDGETS);
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoalSummary[]>([]);
+  const [pendingNotifications, setPendingNotifications] = useState<PendingTransaction[]>([]);
 
   const myDisplayName = profile?.full_name || "Saya";
   const partnerDisplayName = partner?.full_name || "Pasangan";
@@ -128,45 +133,60 @@ export default function DashboardPage() {
           .limit(1);
 
         const activeCoupleId = members?.[0]?.couple_id;
-        if (activeCoupleId) {
-          // Parallelize couple, partner member, transactions, and savings goals
-          const [
-            { data: cRow },
-            { data: pMembers },
-            { data: txRows },
-            { data: goalRows },
-          ] = await Promise.all([
-            supabase
-              .from("couples")
-              .select("*")
-              .eq("id", activeCoupleId)
-              .maybeSingle(),
-            supabase
-              .from("couple_members")
-              .select("profile_id")
-              .eq("couple_id", activeCoupleId)
-              .neq("profile_id", user.id)
-              .limit(1),
-            supabase
+        
+        // Query transactions STRICTLY for couple space (dompet bersama)
+        const txQuery = activeCoupleId
+          ? supabase
               .from("transactions")
               .select("*")
+              .eq("status", "recorded")
               .eq("couple_id", activeCoupleId)
-              .order("transaction_date", { ascending: false }),
-            supabase
-              .from("savings_goals")
+              .neq("scope", "personal")
+          : supabase
+              .from("transactions")
               .select("*")
-              .eq("couple_id", activeCoupleId),
-          ]);
+              .eq("status", "recorded")
+              .eq("created_by", user.id);
 
-          if (cRow) {
-            let currentName = cRow.name;
-            if (currentName && currentName.includes("Gabriel Utomo")) {
-              currentName = currentName.replace("Gabriel Utomo", myName);
-              cRow.name = currentName;
-              supabase.from("couples").update({ name: currentName }).eq("id", cRow.id).then();
-            }
-            setCouple(cRow);
+        // Parallelize couple, partner member, transactions, and pending notifications
+        const [
+          { data: cRow },
+          { data: pMembers },
+          { data: txRows },
+          { data: goalRows },
+          { data: pendingRows },
+        ] = await Promise.all([
+          activeCoupleId
+            ? supabase.from("couples").select("*").eq("id", activeCoupleId).maybeSingle()
+            : Promise.resolve({ data: null }),
+          activeCoupleId
+            ? supabase.from("couple_members").select("profile_id").eq("couple_id", activeCoupleId).neq("profile_id", user.id).limit(1)
+            : Promise.resolve({ data: null }),
+          txQuery.order("transaction_date", { ascending: false }),
+          activeCoupleId
+            ? supabase.from("savings_goals").select("*").eq("couple_id", activeCoupleId)
+            : Promise.resolve({ data: [] }),
+          supabase
+            .from("transactions")
+            .select("*")
+            .eq("created_by", user.id)
+            .eq("status", "pending_review")
+            .order("created_at", { ascending: false }),
+        ]);
+
+        if (pendingRows) {
+          setPendingNotifications(pendingRows as PendingTransaction[]);
+        }
+
+        if (cRow) {
+          let currentName = cRow.name;
+          if (currentName && currentName.includes("Gabriel Utomo")) {
+            currentName = currentName.replace("Gabriel Utomo", myName);
+            cRow.name = currentName;
+            supabase.from("couples").update({ name: currentName }).eq("id", cRow.id).then();
           }
+          setCouple(cRow);
+        }
 
           if (pMembers && pMembers.length > 0) {
             const { data: pProf } = await supabase
@@ -264,7 +284,6 @@ export default function DashboardPage() {
           } else {
             setSavingsGoals([]);
           }
-        }
       } catch (err) {
         console.warn("Could not load dashboard:", err);
       } finally {
@@ -273,7 +292,7 @@ export default function DashboardPage() {
     }
 
     loadDashboardData();
-  }, [router, supabase]);
+  }, [router, supabase, space]);
 
   // Aggregate stats
   const totalExpense = useMemo(
@@ -484,6 +503,15 @@ export default function DashboardPage() {
           {/* User Quick Nav Bar */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <Link
+              href="/pribadi"
+              className="font-label-badge text-xs uppercase px-2.5 sm:px-3 py-1.5 bg-primary-container hover:bg-[#a6e6ff] text-black border-[2px] border-black shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1 font-black rounded-sm"
+              title="Buka Ruang Pribadi (100% Privat)"
+            >
+              <span>👤</span>
+              <span className="hidden sm:inline">Ruang Pribadi</span>
+            </Link>
+
+            <Link
               href="/laporan"
               prefetch={false}
               className="font-label-badge text-xs uppercase px-2.5 sm:px-3 py-1.5 bg-[#D4F34A] hover:bg-[#c2e439] text-on-surface border-[2px] border-black shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1 font-black rounded-sm"
@@ -506,6 +534,15 @@ export default function DashboardPage() {
 
         {/* MAIN DASHBOARD CONTENT */}
         <main className="pt-20 sm:pt-24 pb-20 md:pb-16 px-3 sm:px-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
+          {/* AUTO-CAPTURED NOTIFICATIONS REVIEW WIDGET */}
+          <PendingNotificationsCard
+            items={pendingNotifications}
+            coupleId={couple?.id}
+            onItemProcessed={(id) => {
+              setPendingNotifications((prev) => prev.filter((item) => item.id !== id));
+            }}
+          />
+
           {/* 1. WELCOME & QUICK HUB BANNER */}
           <div className="bg-surface-container-lowest border-[4px] border-black shadow-[6px_6px_0px_#000] rounded-xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-1">
@@ -513,8 +550,8 @@ export default function DashboardPage() {
                 <h1 className="font-headline-lg uppercase font-black text-2xl tracking-tight">
                   Halo, {myDisplayName} &amp; {partner ? partner.full_name : "Pasanganmu"}! 👋
                 </h1>
-                <span className="font-label-badge text-[11px] uppercase font-black px-2.5 py-0.5 bg-[#D4F34A] border-2 border-black rounded">
-                  {partner ? "Live Duo Sync" : "Menunggu Pasangan"}
+                <span className="font-label-badge text-[11px] uppercase font-black px-2.5 py-0.5 bg-[#D4F34A] border-2 border-black rounded shadow-[2px_2px_0px_#000]">
+                  {partner ? "💑 Live Duo Sync" : "💑 Dompet Bersama"}
                 </span>
               </div>
               <p className="font-body-sm text-xs text-on-surface-variant font-bold max-w-xl">

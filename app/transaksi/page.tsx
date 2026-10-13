@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { AppSidebar } from "@/components/app-sidebar";
 import { formatRupiahInput, parseRupiahInput } from "@/lib/currency";
+import { useSpace } from "@/lib/context/space-context";
+import { SpaceSwitcher } from "@/components/space-switcher";
 
 interface TransactionItem {
   id: string;
@@ -41,6 +43,7 @@ const CATEGORIES = [
 export default function TransaksiPage() {
   const router = useRouter();
   const supabase = createClient();
+  const { space, isPersonal, isCouple } = useSpace();
 
   // Auth & Profile State
   const [currentUser, setCurrentUser] = useState<{ id: string; email?: string } | null>(null);
@@ -164,11 +167,19 @@ export default function TransaksiPage() {
             }
           }
 
-          // 3. Transactions
-          const { data: txRows } = await supabase
+          // 3. Transactions based on space
+          let txQuery = supabase
             .from("transactions")
             .select("*")
-            .eq("couple_id", activeCoupleId)
+            .eq("status", "recorded");
+
+          if (space === "personal") {
+            txQuery = txQuery.eq("created_by", user.id).eq("scope", "personal");
+          } else if (activeCoupleId) {
+            txQuery = txQuery.eq("couple_id", activeCoupleId).neq("scope", "personal");
+          }
+
+          const { data: txRows } = await txQuery
             .order("transaction_date", { ascending: false })
             .order("created_at", { ascending: false });
 
@@ -194,7 +205,7 @@ export default function TransaksiPage() {
     }
 
     loadData();
-  }, [router, supabase]);
+  }, [router, supabase, space]);
 
   // Toast Helper
   const showToast = (msg: string) => {
@@ -246,7 +257,8 @@ export default function TransaksiPage() {
       if (modalMode === "add") {
         // CREATE
         const newRecord = {
-          couple_id: couple.id,
+          couple_id: space === "personal" ? null : couple?.id,
+          scope: space,
           created_by: currentUser.id,
           creator_name: myDisplayName,
           updated_by: currentUser.id,
@@ -256,9 +268,10 @@ export default function TransaksiPage() {
           type: formType,
           category_id: formCategory,
           paid_by: formPaidBy,
-          split_method: formSplitMethod,
+          split_method: space === "personal" ? "none" : formSplitMethod,
           transaction_date: formDate,
           description: formDescription.trim() || null,
+          status: "recorded",
         };
 
         const { data: inserted, error: insertErr } = await supabase
@@ -436,6 +449,15 @@ export default function TransaksiPage() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              href="/pribadi"
+              className="font-label-badge text-xs uppercase px-2.5 sm:px-3 py-1.5 bg-primary-container hover:bg-[#a6e6ff] text-black border-[2px] border-black shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1 font-black rounded-sm"
+              title="Buka Catatan Pribadi (100% Privat)"
+            >
+              <span>👤</span>
+              <span className="hidden sm:inline">Ruang Pribadi</span>
+            </Link>
+
             <button
               onClick={handleOpenCreateModal}
               className="bg-primary-container text-on-surface border-[3px] border-black px-3 sm:px-4 py-1.5 rounded font-headline-sm uppercase font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer flex items-center gap-1.5"

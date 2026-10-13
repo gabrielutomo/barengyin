@@ -4,9 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/ui/logo";
+import { SpaceSwitcher } from "@/components/space-switcher";
 
 interface AppSidebarProps {
-  activeNav?: "dashboard" | "dompet" | "transaksi" | "tabungan" | "anggaran" | "laporan" | "scan" | "pasangan" | "pengaturan";
+  activeNav?: "dashboard" | "dompet" | "transaksi" | "tabungan" | "anggaran" | "laporan" | "scan" | "pasangan" | "pengaturan" | "pribadi";
   coupleName?: string;
   partnerName?: string;
   isPartnerConnected?: boolean;
@@ -25,10 +26,14 @@ export function AppSidebar({
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const isPersonalSpace = pathname?.startsWith("/pribadi") || activeNav === "pribadi";
+
   // Determine current active based on prop or pathname
   const currentActive =
     activeNav ||
-    (pathname?.startsWith("/dompet")
+    (pathname?.startsWith("/pribadi")
+      ? "pribadi"
+      : pathname?.startsWith("/dompet")
       ? "dompet"
       : pathname?.startsWith("/transaksi")
       ? "transaksi"
@@ -58,8 +63,71 @@ export function AppSidebar({
             <Logo href="/dashboard" size="sm" showBadge={false} />
           </div>
 
+          {/* Space Switcher Widget */}
+          <div className="px-3 py-2.5 border-b-[3px] border-black bg-surface-container-low/80 flex items-center justify-between">
+            <SpaceSwitcher className="w-full justify-between" />
+          </div>
+
           {/* Navigation Items */}
           <nav className="flex flex-col p-3 gap-1.5">
+            {isPersonalSpace ? (
+              <>
+                {/* Personal Nav 1: Beranda Pribadi */}
+                <Link
+                  href="/pribadi"
+                  prefetch={false}
+                  className={`flex items-center gap-3 px-3 py-2.5 transition-all text-left rounded cursor-pointer ${
+                    currentActive === "pribadi"
+                      ? "bg-primary-container text-on-surface font-black border-l-[5px] border-black shadow-[2px_2px_0px_#000000]"
+                      : "hover:bg-surface-container-low text-on-surface font-bold"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[20px]">
+                    person
+                  </span>
+                  <span className="font-headline-sm text-body-md uppercase">
+                    Catatan Pribadi
+                  </span>
+                </Link>
+
+                {/* Personal Nav 2: Scan Struk */}
+                <Link
+                  href="/scan-struk"
+                  prefetch={false}
+                  className={`flex items-center gap-3 px-3 py-2.5 transition-all text-left rounded cursor-pointer ${
+                    currentActive === "scan"
+                      ? "bg-primary-container text-on-surface font-black border-l-[5px] border-black shadow-[2px_2px_0px_#000000]"
+                      : "hover:bg-surface-container-low text-on-surface font-bold"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[20px]">
+                    document_scanner
+                  </span>
+                  <span className="font-headline-sm text-body-md uppercase">
+                    Scan Struk AI
+                  </span>
+                </Link>
+
+                {/* Personal Nav 3: Pengaturan */}
+                <Link
+                  href="/pengaturan"
+                  prefetch={false}
+                  className={`flex items-center gap-3 px-3 py-2.5 transition-all text-left rounded cursor-pointer ${
+                    currentActive === "pengaturan"
+                      ? "bg-primary-container text-on-surface font-black border-l-[5px] border-black shadow-[2px_2px_0px_#000000]"
+                      : "hover:bg-surface-container-low text-on-surface font-bold"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[20px]">
+                    settings
+                  </span>
+                  <span className="font-headline-sm text-body-md uppercase">
+                    Pengaturan
+                  </span>
+                </Link>
+              </>
+            ) : (
+              <>
             {/* 1. Dashboard */}
             <Link
               href="/dashboard"
@@ -221,48 +289,73 @@ export function AppSidebar({
                 Pengaturan
               </span>
             </Link>
+            </>
+            )}
           </nav>
         </div>
 
-        {/* Desktop Footer Widget: Status Pasangan */}
+        {/* Desktop Footer Widget */}
         <div className="p-3 border-t-[3px] border-black bg-surface-container-low">
-          <Link
-            href="/dompet"
-            prefetch={false}
-            className="block p-3 border-[3px] border-black bg-surface-container-lowest shadow-[3px_3px_0px_#000000] rounded hover:translate-x-0.5 hover:translate-y-0.5 transition-all group"
-          >
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="font-label-badge text-[10px] uppercase px-1.5 py-0.5 bg-tertiary-container text-on-surface border border-black rounded-xs font-black group-hover:bg-primary-container transition-colors">
-                DUO KAS SYNC
-              </span>
-              <span className="font-label-badge text-[10px] uppercase text-primary font-black underline">
-                Dompet &rarr;
-              </span>
-            </div>
-            <div className="font-headline-sm text-xs text-on-surface uppercase truncate font-black">
-              {coupleName}
-            </div>
-            <div className="font-body-sm text-[11px] text-on-surface-variant truncate font-semibold mt-1">
-              {isPartnerConnected ? (
-                <span className="text-[#15803d] font-black flex items-center gap-1">
-                  <span>✓</span>
-                  <span className="truncate">Terhubung {partnerName ? `(${partnerName})` : ""}</span>
+          {isPersonalSpace ? (
+            <Link
+              href="/dashboard"
+              prefetch={false}
+              className="block p-3 border-[3px] border-black bg-secondary-container shadow-[3px_3px_0px_#000000] rounded hover:translate-x-0.5 hover:translate-y-0.5 transition-all group"
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="font-label-badge text-[10px] uppercase px-1.5 py-0.5 bg-black text-white border border-black rounded-xs font-black">
+                  RUANG PASANGAN
                 </span>
-              ) : (
-                <span
-                  onClick={(e) => {
-                    if (onOpenInviteModal) {
-                      e.preventDefault();
-                      onOpenInviteModal();
-                    }
-                  }}
-                  className="text-secondary font-black underline hover:text-black cursor-pointer text-left block truncate"
-                >
-                  + Undang Pasangan
+                <span className="font-label-badge text-[10px] uppercase text-black font-black underline">
+                  Buka &rarr;
                 </span>
-              )}
-            </div>
-          </Link>
+              </div>
+              <div className="font-headline-sm text-xs text-on-surface uppercase truncate font-black">
+                Dompet Bersama
+              </div>
+              <div className="font-body-sm text-[11px] text-neutral-700 truncate font-semibold mt-1">
+                Buka catatan bersama pasangan 💑
+              </div>
+            </Link>
+          ) : (
+            <Link
+              href="/dompet"
+              prefetch={false}
+              className="block p-3 border-[3px] border-black bg-surface-container-lowest shadow-[3px_3px_0px_#000000] rounded hover:translate-x-0.5 hover:translate-y-0.5 transition-all group"
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="font-label-badge text-[10px] uppercase px-1.5 py-0.5 bg-tertiary-container text-on-surface border border-black rounded-xs font-black group-hover:bg-primary-container transition-colors">
+                  DUO KAS SYNC
+                </span>
+                <span className="font-label-badge text-[10px] uppercase text-primary font-black underline">
+                  Dompet &rarr;
+                </span>
+              </div>
+              <div className="font-headline-sm text-xs text-on-surface uppercase truncate font-black">
+                {coupleName}
+              </div>
+              <div className="font-body-sm text-[11px] text-on-surface-variant truncate font-semibold mt-1">
+                {isPartnerConnected ? (
+                  <span className="text-[#15803d] font-black flex items-center gap-1">
+                    <span>✓</span>
+                    <span className="truncate">Terhubung {partnerName ? `(${partnerName})` : ""}</span>
+                  </span>
+                ) : (
+                  <span
+                    onClick={(e) => {
+                      if (onOpenInviteModal) {
+                        e.preventDefault();
+                        onOpenInviteModal();
+                      }
+                    }}
+                    className="text-secondary font-black underline hover:text-black cursor-pointer text-left block truncate"
+                  >
+                    + Undang Pasangan
+                  </span>
+                )}
+              </div>
+            </Link>
+          )}
         </div>
       </aside>
 
@@ -378,6 +471,15 @@ export function AppSidebar({
                 >
                   ✕
                 </button>
+              </div>
+
+              {/* Space Switcher Mobile Widget */}
+              <div className="p-3 bg-white border-2 border-black rounded-lg shadow-[3px_3px_0px_#000] flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] font-black uppercase text-neutral-500">Mode Ruang</div>
+                  <div className="text-xs font-bold text-black mt-0.5">Pilih Catatan</div>
+                </div>
+                <SpaceSwitcher />
               </div>
 
               {/* Couple Info Card */}

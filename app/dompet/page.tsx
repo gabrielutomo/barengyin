@@ -262,14 +262,25 @@ export default function DompetPage() {
             </span>
           </div>
 
-          <button
-            onClick={() => setShowIncomeModal(true)}
-            className="bg-[#D4F34A] hover:bg-[#c2e439] text-black border-[3px] border-black px-3 sm:px-4 py-1.5 rounded font-headline-sm uppercase font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer flex items-center gap-1.5"
-          >
-            <span className="material-symbols-outlined text-base">add_circle</span>
-            <span className="hidden sm:inline">+ Masukkan Gaji / Top-up</span>
-            <span className="sm:hidden">+ Top-up</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/pribadi"
+              className="font-label-badge text-xs uppercase px-2.5 sm:px-3 py-1.5 bg-primary-container hover:bg-[#a6e6ff] text-black border-[2px] border-black shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1 font-black rounded-sm"
+              title="Buka Ruang Pribadi"
+            >
+              <span>👤</span>
+              <span className="hidden sm:inline">Ruang Pribadi</span>
+            </Link>
+
+            <button
+              onClick={() => setShowIncomeModal(true)}
+              className="bg-[#D4F34A] hover:bg-[#c2e439] text-black border-[3px] border-black px-3 sm:px-4 py-1.5 rounded font-headline-sm uppercase font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-base">add_circle</span>
+              <span className="hidden sm:inline">+ Masukkan Gaji / Top-up</span>
+              <span className="sm:hidden">+ Top-up</span>
+            </button>
+          </div>
         </header>
 
         {/* MAIN BODY */}
