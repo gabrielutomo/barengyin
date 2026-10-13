@@ -79,6 +79,21 @@ const DEFAULT_BUDGETS: BudgetCategory[] = [
   },
 ];
 
+const MONTH_NAMES = [
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
+];
+
 export default function DashboardPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -90,6 +105,47 @@ export default function DashboardPage() {
   const [couple, setCouple] = useState<{ id: string; name: string; wallet_mode: string } | null>(null);
   const [partner, setPartner] = useState<{ id: string; full_name: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Monthly cycle state
+  const currentCalendarMonth = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }, []);
+
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  });
+
+  const isCurrentMonth = selectedMonth === currentCalendarMonth;
+
+  const selectedMonthLabel = useMemo(() => {
+    const [yearStr, monthStr] = selectedMonth.split("-");
+    const monthIndex = parseInt(monthStr, 10) - 1;
+    return `${MONTH_NAMES[monthIndex] || ""} ${yearStr}`;
+  }, [selectedMonth]);
+
+  const handlePrevMonth = () => {
+    const [yearStr, monthStr] = selectedMonth.split("-");
+    const year = parseInt(yearStr, 10);
+    const month = parseInt(monthStr, 10);
+    const prevDate = new Date(year, month - 2, 1);
+    const key = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
+    setSelectedMonth(key);
+  };
+
+  const handleNextMonth = () => {
+    const [yearStr, monthStr] = selectedMonth.split("-");
+    const year = parseInt(yearStr, 10);
+    const month = parseInt(monthStr, 10);
+    const nextDate = new Date(year, month, 1);
+    const key = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, "0")}`;
+    setSelectedMonth(key);
+  };
+
+  const handleResetToCurrentMonth = () => {
+    setSelectedMonth(currentCalendarMonth);
+  };
 
   // Live data
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -294,16 +350,35 @@ export default function DashboardPage() {
     loadDashboardData();
   }, [router, supabase, space]);
 
-  // Aggregate stats
-  const totalExpense = useMemo(
+  // Selected monthly transactions
+  const selectedMonthTransactions = useMemo(() => {
+    return transactions.filter((t) => {
+      const txDate = t.rawDate || t.date;
+      return typeof txDate === "string" && txDate.startsWith(selectedMonth);
+    });
+  }, [transactions, selectedMonth]);
+
+  // Aggregate monthly stats (resets per monthly cycle)
+  const monthlyIncome = useMemo(
     () =>
-      transactions
-        .filter((t) => t.type === "expense")
+      selectedMonthTransactions
+        .filter((t) => t.type === "income")
         .reduce((sum, t) => sum + t.amount, 0),
-    [transactions]
+    [selectedMonthTransactions]
   );
 
-  const totalIncome = useMemo(
+  const monthlyExpense = useMemo(
+    () =>
+      selectedMonthTransactions
+        .filter((t) => t.type === "expense")
+        .reduce((sum, t) => sum + t.amount, 0),
+    [selectedMonthTransactions]
+  );
+
+  const monthlyNetFlow = monthlyIncome - monthlyExpense;
+
+  // Cumulative lifetime cash balance (actual wallet cash on hand)
+  const totalLifetimeIncome = useMemo(
     () =>
       transactions
         .filter((t) => t.type === "income")
@@ -311,18 +386,26 @@ export default function DashboardPage() {
     [transactions]
   );
 
-  const remainingBalance = totalIncome - totalExpense;
+  const totalLifetimeExpense = useMemo(
+    () =>
+      transactions
+        .filter((t) => t.type === "expense")
+        .reduce((sum, t) => sum + t.amount, 0),
+    [transactions]
+  );
+
+  const remainingBalance = totalLifetimeIncome - totalLifetimeExpense;
 
   const totalSavings = useMemo(
     () => savingsGoals.reduce((sum, g) => sum + g.current_amount, 0),
     [savingsGoals]
   );
 
-  // Duo Contribution Split Stats
+  // Duo Contribution Split Stats for the selected month
   const contributionStats = useMemo(() => {
     let myPaid = 0;
     let partnerPaid = 0;
-    transactions
+    selectedMonthTransactions
       .filter((t) => t.type === "expense")
       .forEach((t) => {
         if (t.paidBy === myDisplayName || t.paidBy === "Saya") {
@@ -337,7 +420,20 @@ export default function DashboardPage() {
     const partnerPct = direct > 0 ? 100 - myPct : 50;
 
     return { myPaid, partnerPaid, myPct, partnerPct };
-  }, [transactions, myDisplayName]);
+  }, [selectedMonthTransactions, myDisplayName]);
+
+  // Dynamic budget spent based on selected month
+  const displayBudgets = useMemo(() => {
+    return budgets.map((b) => {
+      const matchSpent = selectedMonthTransactions
+        .filter((t) => t.type === "expense" && t.category.toLowerCase() === b.name.toLowerCase())
+        .reduce((sum, t) => sum + t.amount, 0);
+      return {
+        ...b,
+        spent: matchSpent,
+      };
+    });
+  }, [budgets, selectedMonthTransactions]);
 
   // Real 6-Month dynamic trend calculation from actual transactions
   const sixMonthsData = useMemo(() => {
@@ -437,27 +533,21 @@ export default function DashboardPage() {
     }
   }, [sixMonthsData]);
 
-  // Category Breakdown for the Pie Chart
+  // Category Breakdown for the Pie Chart based on selected month
   const categoryBreakdownData = useMemo(() => {
-    const now = new Date();
-    const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const selectedMonthExpenses = selectedMonthTransactions.filter(
+      (t) => t.type === "expense"
+    );
 
-    const currentMonthExpenses = transactions.filter((t) => {
-      if (t.type !== "expense") return false;
-      const txDate = t.rawDate || t.date;
-      return typeof txDate === "string" && txDate.startsWith(currentYearMonth);
-    });
-
-    const isCurrentMonthActive = currentMonthExpenses.length > 0;
-    const targetExpenses = isCurrentMonthActive
-      ? currentMonthExpenses
+    const isPeriodActive = selectedMonthExpenses.length > 0;
+    const targetExpenses = isPeriodActive
+      ? selectedMonthExpenses
       : transactions.filter((t) => t.type === "expense");
 
     const map: Record<string, number> = {};
 
     targetExpenses.forEach((t) => {
       const raw = t.rawCategory || t.category || "Lainnya";
-      // Capitalize nicely
       const cat = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
       map[cat] = (map[cat] || 0) + t.amount;
     });
@@ -472,9 +562,9 @@ export default function DashboardPage() {
     return {
       list,
       total,
-      periodLabel: isCurrentMonthActive ? "Bulan Ini" : "Semua Waktu",
+      periodLabel: isPeriodActive ? selectedMonthLabel : "Semua Waktu",
     };
-  }, [transactions]);
+  }, [selectedMonthTransactions, transactions, selectedMonthLabel]);
 
   return (
     <div className="bg-surface font-body-md text-on-surface antialiased min-h-screen selection:bg-primary-container selection:text-black">
@@ -548,10 +638,10 @@ export default function DashboardPage() {
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="font-headline-lg uppercase font-black text-2xl tracking-tight">
-                  Halo, {myDisplayName} &amp; {partner ? partner.full_name : "Pasanganmu"}! 👋
+                  Halo, {myDisplayName} &amp; {partner ? partner.full_name : "Pasanganmu"}
                 </h1>
                 <span className="font-label-badge text-[11px] uppercase font-black px-2.5 py-0.5 bg-[#D4F34A] border-2 border-black rounded shadow-[2px_2px_0px_#000]">
-                  {partner ? "💑 Live Duo Sync" : "💑 Dompet Bersama"}
+                  {partner ? "Live Duo Sync" : "Dompet Bersama"}
                 </span>
               </div>
               <p className="font-body-sm text-xs text-on-surface-variant font-bold max-w-xl">
@@ -596,6 +686,94 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* MONTH SELECTOR & PERIOD CYCLE BANNER */}
+          <div className="bg-surface-container-lowest border-[3px] border-black shadow-[4px_4px_0px_#000] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary-container border-2 border-black rounded-lg flex items-center justify-center shadow-[2px_2px_0px_#000] shrink-0">
+                <span className="material-symbols-outlined text-xl text-black">calendar_month</span>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-label-badge text-xs uppercase font-black text-on-surface-variant">
+                    Siklus Periode
+                  </span>
+                  {isCurrentMonth ? (
+                    <span className="text-[10px] uppercase font-black px-2 py-0.5 bg-[#D4F34A] border border-black rounded shadow-[1px_1px_0px_#000]">
+                      Bulan Berjalan
+                    </span>
+                  ) : (
+                    <span className="text-[10px] uppercase font-black px-2 py-0.5 bg-secondary-container border border-black rounded shadow-[1px_1px_0px_#000]">
+                      Arsip Periode
+                    </span>
+                  )}
+                </div>
+                <h2 className="font-headline-sm uppercase font-black text-base text-on-surface">
+                  {selectedMonthLabel}
+                </h2>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Previous Month */}
+              <button
+                type="button"
+                onClick={handlePrevMonth}
+                title="Bulan Sebelumnya"
+                aria-label="Bulan Sebelumnya"
+                className="w-9 h-9 bg-surface-container-low hover:bg-surface-container border-2 border-black rounded flex items-center justify-center shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-lg">chevron_left</span>
+              </button>
+
+              {/* Month Picker Input */}
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={(e) => {
+                  if (e.target.value) setSelectedMonth(e.target.value);
+                }}
+                className="bg-surface-container-low border-2 border-black rounded px-2.5 py-1 text-xs font-black uppercase shadow-[2px_2px_0px_#000] focus:outline-none cursor-pointer"
+                aria-label="Pilih Bulan"
+              />
+
+              {/* Next Month */}
+              <button
+                type="button"
+                onClick={handleNextMonth}
+                title="Bulan Berikutnya"
+                aria-label="Bulan Berikutnya"
+                className="w-9 h-9 bg-surface-container-low hover:bg-surface-container border-2 border-black rounded flex items-center justify-center shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-lg">chevron_right</span>
+              </button>
+
+              {/* Reset to current month if viewing past */}
+              {!isCurrentMonth && (
+                <button
+                  type="button"
+                  onClick={handleResetToCurrentMonth}
+                  className="px-3 py-1.5 bg-[#D4F34A] hover:bg-[#c2e439] text-black border-2 border-black rounded text-xs font-black uppercase shadow-[2px_2px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <span className="material-symbols-outlined text-sm">restart_alt</span>
+                  <span>Bulan Ini</span>
+                </button>
+              )}
+
+              {/* Monthly Net Flow Badge */}
+              <div
+                className={`px-3 py-1.5 border-2 border-black rounded text-xs font-black uppercase shadow-[2px_2px_0px_#000] ${
+                  monthlyNetFlow >= 0
+                    ? "bg-[#D4F34A]/30 text-[#15803d]"
+                    : "bg-[#ba1a1a]/15 text-[#ba1a1a]"
+                }`}
+              >
+                {monthlyNetFlow >= 0
+                  ? `Surplus: +Rp ${monthlyNetFlow.toLocaleString("id-ID")}`
+                  : `Defisit: -Rp ${Math.abs(monthlyNetFlow).toLocaleString("id-ID")}`}
+              </div>
+            </div>
+          </div>
+
           {/* 2. FOUR PRIMARY FINANCIAL STAT CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Stat 1: Saldo Bersama */}
@@ -614,7 +792,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="pt-2 border-t border-black/15 flex items-center justify-between text-xs font-bold">
-                <span className="text-[#0369a1]">Kas Aktif Bersama</span>
+                <span className="text-[#0369a1]">Kas Aktif Kumulatif</span>
                 <Link href="/dompet" prefetch={false} aria-label="Kelola Saldo Dompet Bersama" className="text-xs underline font-headline-sm uppercase font-black">
                   Kelola &rarr;
                 </Link>
@@ -626,10 +804,10 @@ export default function DashboardPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <span className="font-label-badge text-xs uppercase font-black text-on-surface-variant">
-                    Pemasukan Bulan Ini
+                    {isCurrentMonth ? "Pemasukan Bulan Ini" : `Pemasukan (${selectedMonthLabel})`}
                   </span>
                   <div className="font-numeric-stat text-2xl sm:text-3xl font-black text-[#15803d] mt-1">
-                    Rp {totalIncome.toLocaleString("id-ID")}
+                    Rp {monthlyIncome.toLocaleString("id-ID")}
                   </div>
                 </div>
                 <div className="w-10 h-10 bg-[#D4F34A] border-2 border-black shadow-[2px_2px_0px_#000] rounded-lg flex items-center justify-center">
@@ -637,7 +815,9 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="pt-2 border-t border-black/15 flex items-center justify-between text-xs font-bold">
-                <span className="text-[#15803d]">Top-up &amp; Setoran Rutin</span>
+                <span className="text-[#15803d]">
+                  {selectedMonthTransactions.filter((t) => t.type === "income").length} transaksi pemasukan
+                </span>
                 <Link href="/transaksi" prefetch={false} aria-label="Rincian Pemasukan Bulan Ini" className="text-xs underline font-headline-sm uppercase font-black">
                   Rincian &rarr;
                 </Link>
@@ -649,10 +829,10 @@ export default function DashboardPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <span className="font-label-badge text-xs uppercase font-black text-on-surface-variant">
-                    Pengeluaran Bulan Ini
+                    {isCurrentMonth ? "Pengeluaran Bulan Ini" : `Pengeluaran (${selectedMonthLabel})`}
                   </span>
                   <div className="font-numeric-stat text-2xl sm:text-3xl font-black text-secondary mt-1">
-                    Rp {totalExpense.toLocaleString("id-ID")}
+                    Rp {monthlyExpense.toLocaleString("id-ID")}
                   </div>
                 </div>
                 <div className="w-10 h-10 bg-secondary-container border-2 border-black shadow-[2px_2px_0px_#000] rounded-lg flex items-center justify-center">
@@ -660,7 +840,9 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="pt-2 border-t border-black/15 flex items-center justify-between text-xs font-bold">
-                <span className="text-secondary">{transactions.filter((t) => t.type === "expense").length} transaksi</span>
+                <span className="text-secondary">
+                  {selectedMonthTransactions.filter((t) => t.type === "expense").length} transaksi pengeluaran
+                </span>
                 <Link href="/transaksi" prefetch={false} aria-label="Rincian Pengeluaran Bulan Ini" className="text-xs underline font-headline-sm uppercase font-black">
                   Rincian &rarr;
                 </Link>
@@ -781,7 +963,7 @@ export default function DashboardPage() {
                 <div className="p-3.5 bg-[#ebe1ff] border-[2px] border-black shadow-[2px_2px_0px_#000] rounded flex items-center gap-3">
                   <span className="material-symbols-outlined text-primary text-xl shrink-0">insights</span>
                   <p className="font-body-sm text-xs text-on-surface font-bold">
-                    💡 <b>Executive Insight:</b> {trendInsight}
+                    <b>Executive Insight:</b> {trendInsight}
                   </p>
                 </div>
               </div>
@@ -839,7 +1021,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="space-y-2.5">
-                  {budgets.slice(0, 3).map((b) => {
+                  {displayBudgets.slice(0, 3).map((b) => {
                     const pct = Math.min(100, Math.round((b.spent / b.limit) * 100));
                     return (
                       <div key={b.id} className="space-y-1">
