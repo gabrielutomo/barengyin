@@ -51,21 +51,30 @@ so verify in the dashboard after saving.
 
 ## 3. Bot protection (captcha)
 
-**Order matters — the code change is already committed, but it must be deployed
-before or with this dashboard change.**
+**Deploy order — three steps, and the order is load-bearing:**
+
+1. **Merge and deploy this branch first.** The live site still runs the old
+   code. Verified while writing this: `POST https://barengyinyuk.my.id/api/verify-turnstile`
+   with `{"token":"dev-bypass-x"}` still returns `{"success":true}`. The
+   `dev-bypass-` guard and the `captchaToken` wiring exist only on this branch,
+   so the app's bot gate stays bypassable until it is deployed.
+2. **Then enable captcha in the dashboard** (below). Doing this first rejects
+   every sign-in, because the deployed code must already send `captchaToken`.
+3. **Then verify** the PIN-vault unlock path still works (see the known gap below).
 
 - [ ] Enable **Enable CAPTCHA protection**
 - [ ] Provider: **Cloudflare Turnstile**
 - [ ] Secret key: paste the value of `TURNSTILE_SECRET_KEY` from `.env`
 
-Without this step, the app's Turnstile gate is decorative — it was verified
-exploitable: a direct call to Supabase signup with no captcha token returned a
-session and marked the email verified.
+Without step 2 the app's Turnstile gate is bypassable, and without the Supabase
+setting anyone can skip captcha entirely by calling `/auth/v1/signup` directly —
+that was reproduced: no captcha token still returned a session with
+`email_verified: true`.
 
-**The dashboard setting alone is not enough, and enabling it without the code
-deployed will reject every sign-in.** Supabase only accepts a captcha-protected
-auth request when the client sends a `captchaToken`. `app/masuk/page.tsx` now
-passes it on the two flows that render the widget:
+**Step 2 alone is not enough, and enabling it before step 1 will reject every
+sign-in.** Supabase only accepts a captcha-protected auth request when the
+client sends a `captchaToken`. `app/masuk/page.tsx` now passes it on the two
+flows that render the widget:
 
 | Call | Location | Sends `captchaToken` |
 |---|---|---|
@@ -79,17 +88,28 @@ passes it on the two flows that render the widget:
 > working. Verify it after enabling captcha; if Supabase starts rejecting it,
 > either render a widget on that path or turn off captcha for sign-in only.
 
-The app reads these env names:
+Both keys must be the **real** Cloudflare ones. Each has a public test
+placeholder wired in as a fallback, and a test key on either side breaks
+production in a way that looks like "captcha always fails":
 
 ```
-NEXT_PUBLIC_TURNSTILE_SITE_KEY   # client widget (app/masuk/page.tsx)
-TURNSTILE_SECRET_KEY             # Cloudflare siteverify (app/api/verify-turnstile/route.ts)
+components/turnstile.tsx:42        process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+                                   ⚠ falls back to test sitekey 1x00000000000000000000AA
+app/api/verify-turnstile/route.ts  process.env.TURNSTILE_SECRET_KEY
+                                   ⚠ falls back to test secret 1x0000000000000000000000000000000AA
 ```
 
-`app/api/verify-turnstile/route.ts` falls back to Cloudflare's public **test**
-secret (`1x0000000000000000000000000000000AA`) when `TURNSTILE_SECRET_KEY` is
-unset. That key always passes — it is fine for local dev, dangerous in production.
-Ensure the real key is set in the Vercel environment.
+A **test sitekey with a real secret** mints tokens the real secret rejects, so
+every login fails. A **real sitekey with a test secret** is worse — the public
+test secret accepts anything, so the gate is decorative. Set both in Vercel and
+confirm neither fallback is in play:
+
+```bash
+# both must print a real value, not a 1x000... placeholder
+grep -rn "NEXT_PUBLIC_TURNSTILE_SITE_KEY\|TURNSTILE_SECRET_KEY" .env.local
+```
+
+The test values are fine for local dev only.
 
 Any token prefixed `dev-bypass-` is accepted **only when
 `NODE_ENV !== "production"`**. That branch previously ran unconditionally and

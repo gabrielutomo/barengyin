@@ -23,6 +23,11 @@ defence; the default GRANT was the first, and it was wide open.
 
 ## 2. Apply the database fix
 
+> **Nothing below is live yet.** Until this migration is applied, production
+> still leaks: `GET /rest/v1/profiles?select=*` with only an `apikey` returns
+> all rows including `pin_hash`. The SQL in this repo is a fix that has been
+> tested, not a fix that has been deployed.
+
 > **Order matters.** Apply this migration **before** deploying the new app code.
 > Verified live: `couple_secrets`, `profile_secrets` and all three new RPCs
 > (`couple_member_profiles`, `couple_pin_configured`,
