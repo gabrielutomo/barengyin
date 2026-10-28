@@ -140,6 +140,10 @@ function MasukForm() {
           email: cleanEmail,
           password,
           options: {
+            // Required when CAPTCHA protection is enabled in the Supabase
+            // dashboard (Authentication -> Attack Protection). Without it a
+            // dashboard-enabled captcha rejects every signup.
+            captchaToken: turnstileToken ?? undefined,
             data: {
               full_name: fullName.trim(),
             },
@@ -163,6 +167,9 @@ function MasukForm() {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: cleanEmail,
           password,
+          options: {
+            captchaToken: turnstileToken ?? undefined,
+          },
         });
         if (error) throw error;
 

@@ -7,7 +7,7 @@
 Catatan desain schema:
 - `auth.users` adalah tabel bawaan **Supabase Auth**; tabel `profiles` di bawah adalah tabel publik yang extend data user (1:1 dengan `auth.users`).
 - Semua tabel domain (wallet, transaksi, budget, dst.) di-scope oleh `couple_id` agar Row Level Security (RLS) Supabase bisa membatasi akses hanya untuk 2 anggota Couple Space terkait.
-- PIN 4 digit disimpan dalam bentuk hash (`pin_hash`), tidak pernah plaintext.
+- PIN 4 digit disimpan dalam bentuk hash, tidak pernah plaintext. Hash **tidak** disimpan di `profiles`/`couples` (tabel yang bisa dibaca client), melainkan di tabel terpisah `profile_secrets` (RLS: `auth.uid() = id`) dan `couple_secrets` (RLS: `is_member_of_couple(couple_id)`). Pembacaan/pembandingan hanya lewat RPC `SECURITY DEFINER`.
 
 ---
 
@@ -37,6 +37,32 @@ erDiagram
     SAVINGS_GOALS ||--o{ SAVINGS_CONTRIBUTIONS : "accumulates"
     PROFILES ||--o{ SAVINGS_CONTRIBUTIONS : "contributes"
 
+    PROFILES ||--o| PROFILE_SECRETS : "seals"
+    COUPLES ||--o| COUPLE_SECRETS : "seals"
+    PROFILES ||--o{ USER_API_KEYS : "issues"
+
+    PROFILE_SECRETS {
+        uuid id PK "FK -> profiles.id, RLS auth.uid() = id"
+        text pin_hash "hashed 4-digit PIN, never client-readable"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    COUPLE_SECRETS {
+        uuid couple_id PK "FK -> couples.id, RLS is_member_of_couple()"
+        text pin_hash "shared couple PIN hash"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    USER_API_KEYS {
+        uuid id PK
+        uuid profile_id "FK -> profiles.id"
+        text api_key "opaque, unique"
+        text name
+        timestamptz created_at
+    }
+
     AUTH_USERS {
         uuid id PK
         text email
@@ -48,7 +74,6 @@ erDiagram
         uuid id PK "FK -> auth.users.id"
         text full_name
         text avatar_url
-        text pin_hash "nullable, hashed 4-digit PIN"
         text theme_color "avatar tag color e.g. blue/pink"
         timestamptz created_at
         timestamptz updated_at
@@ -211,7 +236,7 @@ erDiagram
 1. **Split fleksibel** — `transactions.split_method` menentukan strategi, sementara detail nominal per orang disimpan granular di `transaction_splits`, sehingga laporan "siapa berkontribusi berapa" (seperti di stat card "Aris: 14.5jt | Nisa: 10.0jt") bisa dihitung akurat.
 2. **Mode dompet gabung vs pisah** — direpresentasikan lewat `couples.wallet_mode` dan `wallets.type`; ketika `separate`, tiap `wallets` row punya `owner_profile_id`, tapi tetap satu `couple_id` sehingga laporan gabungan tetap bisa dihitung lintas wallet.
 3. **Scan struk sebagai staging area** — `receipt_scans` terpisah dari `transactions` agar hasil AI bisa direview/dikoreksi pengguna dulu sebelum resmi tercatat (`transactions.receipt_scan_id` sebagai referensi balik).
-4. **PIN pasangan** — disimpan di level `profiles.pin_hash`, bukan di level couple, karena tiap orang punya PIN individu untuk login cepat di perangkat bersama.
+4. **PIN pasangan** — hash disimpan di `couple_secrets.pin_hash` (bukan di `couples`/`profiles`), karena PIN dipakai bersama oleh kedua anggota couple untuk membuka vault bersama. Verifikasi saat join lewat RPC `verify_couple_pin_for_invite(token, hash)` yang mengembalikan hanya data tampilan, tidak pernah hash-nya. PIN individu (vault lokal) disimpan di `profile_secrets.pin_hash` dengan akses hanya pemiliknya.
 5. **RLS Supabase** — semua query ke tabel domain (`transactions`, `budgets`, `wallets`, dst.) difilter melalui kebijakan RLS berbasis `couple_id IN (SELECT couple_id FROM couple_members WHERE profile_id = auth.uid())`, memastikan data satu couple tidak bisa diakses couple lain.
 
 ---

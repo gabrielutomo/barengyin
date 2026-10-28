@@ -50,7 +50,9 @@ curl http://localhost:8080/health
    * `NEXT_PUBLIC_SUPABASE_URL`: URL project Supabase Anda
    * `SUPABASE_SERVICE_ROLE_KEY`: Service role secret Supabase Anda
    * `DATABASE_URL`: Connection string PostgreSQL dari Supabase
-   * `INGESTER_API_KEY`: API Key pilihan Anda untuk autentikasi HP
+
+   Tidak ada shared master key. Autentikasi bersifat per pengguna: request
+   diterima jika dan hanya jika API Key-nya ada di tabel `public.user_api_keys`.
 5. Railway akan otomatis build Dockerfile dan memberikan domain publik HTTPS (contoh: `https://barengyin-ingester.up.railway.app`).
 
 ### Opsi 2: Fly.io (Gratis / Murah)
@@ -77,14 +79,22 @@ fly deploy
      * **Request Body:**
        ```json
        {
-         "user_id": "[UUID_PROFILE_USER_ANDA]",
          "package_name": "{not_app_pkg}",
          "title": "{not_title}",
          "text": "{not_text}",
          "post_time": {system_time}
        }
        ```
+       Kolom `user_id` **sudah tidak dipakai lagi**. Identitas pemilik transaksi
+       ditentukan sepenuhnya dari API Key di header — body request tidak akan
+       pernah dipercaya untuk menyatakan siapa pemiliknya. Field lama boleh
+       tetap dikirim (diabaikan), tidak akan error.
      * **Headers:**  
-       `X-API-Key: barengyin-super-secret-key`
+       `X-API-Key: <API_KEY_ANDA>` (atau `Authorization: Bearer <API_KEY_ANDA>`)
+
+       API Key bersifat rahasia per pengguna. Ambil nilainya dari halaman
+       Pengaturan di Barengyin, atau dari tabel `public.user_api_keys` di
+       Supabase. **Jangan** pakai nilai contoh atau key yang dibagikan —
+       setiap key hanya berlaku untuk akun pemiliknya.
 3. Simpan dan aktifkan izin *Notification Access* untuk MacroDroid di pengaturan HP.
 4. Selesai! Setiap kali Anda transaksi QRIS atau transfer, transaksi akan seketika masuk ke Barengyin dan siap di-review di dashboard.

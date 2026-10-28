@@ -171,10 +171,10 @@ export default function DashboardPage() {
 
         setCurrentUser({ id: user.id, email: user.email });
 
-        // 1. Profile
+        // 1. Profile (own row only; never select * — pin_hash used to live here)
         const { data: prof } = await supabase
           .from("profiles")
-          .select("*")
+          .select("id, full_name, avatar_url, theme_color, created_at")
           .eq("id", user.id)
           .maybeSingle();
 
@@ -213,7 +213,11 @@ export default function DashboardPage() {
           { data: pendingRows },
         ] = await Promise.all([
           activeCoupleId
-            ? supabase.from("couples").select("*").eq("id", activeCoupleId).maybeSingle()
+            ? supabase
+                .from("couples")
+                .select("id, name, wallet_mode, default_split_ratio_a, default_split_ratio_b, currency, created_by, created_at")
+                .eq("id", activeCoupleId)
+                .maybeSingle()
             : Promise.resolve({ data: null }),
           activeCoupleId
             ? supabase.from("couple_members").select("profile_id").eq("couple_id", activeCoupleId).neq("profile_id", user.id).limit(1)
@@ -245,12 +249,13 @@ export default function DashboardPage() {
         }
 
           if (pMembers && pMembers.length > 0) {
-            const { data: pProf } = await supabase
-              .from("profiles")
-              .select("id, full_name")
-              .eq("id", pMembers[0].profile_id)
-              .maybeSingle();
-            if (pProf) setPartner(pProf);
+            // Partner display data comes from the membership-scoped RPC.
+            // Direct profiles SELECT is restricted to auth.uid() = id.
+            const { data: memberProfiles } = await supabase.rpc("couple_member_profiles");
+            const pProf = (memberProfiles || []).find(
+              (row: { id: string }) => row.id === pMembers[0].profile_id
+            );
+            if (pProf) setPartner({ id: pProf.id, full_name: pProf.full_name });
           }
 
           // 3. Transactions mapping

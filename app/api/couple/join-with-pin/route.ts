@@ -88,10 +88,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Fetch couple details
+    // 3. Fetch couple details (explicit columns: pin_hash is not on this table
+    //    anymore and must never be selected even if it reappears)
     const { data: couple, error: coupleErr } = await admin
       .from("couples")
-      .select("*")
+      .select("id, name, wallet_mode, currency, created_by")
       .eq("id", invite.couple_id)
       .maybeSingle();
 
@@ -102,23 +103,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!couple.pin_hash) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Pasanganmu belum mengatur PIN Pasangan. Minta pasanganmu mengatur PIN di menu Ruang Pasangan terlebih dahulu.",
-        },
-        { status: 400 }
-      );
+    const enteredHash = await hashPin(cleanPin);
+
+    // 4. Verify the PIN against public.couple_secrets through the
+    //    SECURITY DEFINER RPC. The invite token plus a matching hash is the
+    //    proof; the caller is not a member yet, so membership cannot gate it.
+    //    The hash itself never crosses the wire.
+    const { data: verifiedRows, error: verifyErr } = await admin.rpc(
+      "verify_couple_pin_for_invite",
+      { invite_token_value: cleanToken, pin_hash_value: enteredHash }
+    );
+
+    if (verifyErr) {
+      throw new Error(verifyErr.message);
     }
 
-    // 4. Verify PIN matches couples.pin_hash
-    const enteredHash = await hashPin(cleanPin);
-    if (enteredHash !== couple.pin_hash) {
+    const verified = Array.isArray(verifiedRows) ? verifiedRows[0] : verifiedRows;
+
+    if (!verified) {
       return NextResponse.json(
         {
           success: false,
-          error: "PIN Pasangan tidak cocok. Pastikan kamu memasukkan 4-digit PIN yang sama dengan yang telah diatur oleh pasanganmu!",
+          error:
+            "PIN Pasangan tidak cocok. Pastikan kamu memasukkan 4-digit PIN yang sama dengan yang telah diatur oleh pasanganmu!",
         },
         { status: 400 }
       );
@@ -128,12 +135,21 @@ export async function POST(request: NextRequest) {
     const myDisplayName =
       user.user_metadata?.full_name || user.email?.split("@")[0] || "Pasangan";
 
-    // 5a. Ensure user profile exists
+    // 5a. Ensure user profile exists, then seal the PIN hash separately.
+    //     profiles has no pin_hash column anymore.
     await admin.from("profiles").upsert(
       {
         id: user.id,
         full_name: myDisplayName,
+      },
+      { onConflict: "id" }
+    );
+
+    await admin.from("profile_secrets").upsert(
+      {
+        id: user.id,
         pin_hash: enteredHash,
+        updated_at: new Date().toISOString(),
       },
       { onConflict: "id" }
     );

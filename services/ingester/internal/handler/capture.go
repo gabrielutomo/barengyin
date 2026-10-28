@@ -1,33 +1,36 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/barengyin/notification-ingester/internal/cache"
-	"github.com/barengyin/notification-ingester/internal/config"
 	"github.com/barengyin/notification-ingester/internal/db"
 	"github.com/barengyin/notification-ingester/internal/parser"
 )
 
 type CaptureHandler struct {
-	cfg   *config.Config
 	redis *cache.RedisClient
 	db    *db.DBClient
 }
 
-func NewCaptureHandler(cfg *config.Config, redis *cache.RedisClient, db *db.DBClient) *CaptureHandler {
+func NewCaptureHandler(redis *cache.RedisClient, db *db.DBClient) *CaptureHandler {
 	return &CaptureHandler{
-		cfg:   cfg,
 		redis: redis,
 		db:    db,
 	}
 }
 
+// CaptureRequest is the notification payload from the device.
+//
+// There is deliberately no user_id field: identity comes from the API key
+// (see resolveOwner). A body-supplied user id would let any caller write into
+// any account. Unknown JSON fields are ignored by encoding/json, so older
+// clients that still send user_id will not break.
 type CaptureRequest struct {
-	UserID      string `json:"user_id"`
 	PackageName string `json:"package_name"`
 	Title       string `json:"title"`
 	Text        string `json:"text"`
@@ -41,13 +44,35 @@ type CaptureResponse struct {
 	Parsed        *parser.ParsedTransaction `json:"parsed,omitempty"`
 }
 
+// resolveOwner maps the presented API key to the profile that owns it.
+// This is the single authentication gate for the endpoint: a key is valid if
+// and only if it exists in public.user_api_keys. Returns ("", false) when the
+// key is unknown.
+//
+// There is deliberately no separate master-key check. The previous version
+// required the presented key to equal cfg.MasterAPIKey (INGESTER_API_KEY)
+// before this lookup ran, which made the documented per-user flow impossible:
+// keys issued from Pengaturan were rejected before they were ever looked up,
+// and the master key itself failed this lookup unless it also happened to be a
+// user_api_keys row. Unknown keys still get a 401 from the caller.
+func (h *CaptureHandler) resolveOwner(ctx context.Context, apiKey string) (string, bool) {
+	if apiKey == "" {
+		return "", false
+	}
+	profileID, err := h.db.LookupProfileByAPIKey(ctx, apiKey)
+	if err != nil || profileID == "" {
+		return "", false
+	}
+	return profileID, true
+}
+
 func (h *CaptureHandler) HandleCapture(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// 1. Auth check (X-API-Key or Authorization header)
+	// 1. Extract the API key (X-API-Key or Authorization: Bearer).
 	apiKey := r.Header.Get("X-API-Key")
 	if apiKey == "" {
 		authHeader := r.Header.Get("Authorization")
@@ -56,12 +81,17 @@ func (h *CaptureHandler) HandleCapture(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if apiKey == "" && h.cfg.MasterAPIKey != "" {
-		http.Error(w, `{"error": "Unauthorized: API Key required"}`, http.StatusUnauthorized)
+	// 2. Authenticate AND resolve identity in one step: the key must exist in
+	//    public.user_api_keys. Unknown or absent keys get a 401. The request
+	//    body cannot name a user: the user_id field was removed from
+	//    CaptureRequest.
+	ownerID, ok := h.resolveOwner(r.Context(), apiKey)
+	if !ok {
+		http.Error(w, `{"error": "Unauthorized: unknown API Key"}`, http.StatusUnauthorized)
 		return
 	}
 
-	// 2. Decode payload
+	// 3. Decode payload
 	var req CaptureRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, `{"error": "Invalid JSON body"}`, http.StatusBadRequest)
@@ -73,8 +103,8 @@ func (h *CaptureHandler) HandleCapture(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 3. Redis Deduplication Check (< 1ms)
-	dedupKey := cache.GenerateDedupKey(req.UserID, req.PackageName+":"+req.Text)
+	// 4. Redis Deduplication Check (< 1ms)
+	dedupKey := cache.GenerateDedupKey(ownerID, req.PackageName+":"+req.Text)
 	if h.redis.IsDuplicate(r.Context(), dedupKey, 5*time.Minute) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -85,7 +115,7 @@ func (h *CaptureHandler) HandleCapture(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 4. Run Universal Bank Parser (< 0.1ms)
+	// 5. Run Universal Bank Parser (< 0.1ms)
 	parsed := parser.ParseNotification(req.PackageName, req.Title, req.Text)
 
 	// If amount could not be extracted, set reasonable defaults
@@ -104,10 +134,10 @@ func (h *CaptureHandler) HandleCapture(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 5. Direct write to database (Status: pending_review, Scope: personal)
+	// 6. Direct write to database (Status: pending_review, Scope: personal)
 	currentDate := time.Now().Format("2006-01-02")
 	txID, err := h.db.InsertTransaction(r.Context(), db.InsertTransactionParams{
-		CreatedBy:           req.UserID,
+		CreatedBy:           ownerID,
 		Title:               txTitle,
 		Amount:              parsed.Amount,
 		Type:                parsed.Type,
@@ -129,7 +159,7 @@ func (h *CaptureHandler) HandleCapture(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 6. Return response
+	// 7. Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(CaptureResponse{

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -55,6 +56,78 @@ func NewDBClient(databaseURL, supabaseURL, supabaseKey string) *DBClient {
 	}
 
 	return client
+}
+
+// LookupProfileByAPIKey resolves an opaque ingester API key to the profile
+// that owns it. Returns ("", nil) when the key is unknown so the caller can
+// answer 401 without leaking whether the key merely exists.
+//
+// The lookup runs against public.user_api_keys, which is RLS-protected:
+// only the service_role REST client (bypasses RLS) or the direct postgres
+// connection can read it. The desktop/mobile client never can.
+func (c *DBClient) LookupProfileByAPIKey(ctx context.Context, apiKey string) (string, error) {
+	if apiKey == "" {
+		return "", nil
+	}
+
+	// 1. Direct PostgreSQL query if available
+	if c.db != nil {
+		var profileID string
+		err := c.db.QueryRowContext(ctx,
+			`select profile_id from public.user_api_keys where api_key = $1 limit 1`,
+			apiKey,
+		).Scan(&profileID)
+		if err == nil {
+			return profileID, nil
+		}
+		if err != sql.ErrNoRows {
+			log.Printf("[DATABASE WARNING] API key lookup failed: %v. Trying Supabase REST API...", err)
+		} else {
+			return "", nil
+		}
+	}
+
+	// 2. Supabase REST API fallback
+	if c.supabaseURL == "" || c.supabaseKey == "" {
+		return "", fmt.Errorf("no database connection or supabase credentials provided")
+	}
+
+	endpoint := fmt.Sprintf(
+		"%s/rest/v1/user_api_keys?select=profile_id&api_key=eq.%s&limit=1",
+		c.supabaseURL,
+		url.QueryEscape(apiKey),
+	)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("apikey", c.supabaseKey)
+	req.Header.Set("Authorization", "Bearer "+c.supabaseKey)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("supabase REST API error status %d", resp.StatusCode)
+	}
+
+	var rows []struct {
+		ProfileID string `json:"profile_id"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&rows); err != nil {
+		return "", err
+	}
+	if len(rows) == 0 {
+		return "", nil
+	}
+
+	return rows[0].ProfileID, nil
 }
 
 // InsertTransaction inserts a transaction either via direct SQL or Supabase REST API

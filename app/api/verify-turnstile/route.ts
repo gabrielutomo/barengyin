@@ -20,15 +20,22 @@ export async function POST(request: NextRequest) {
       process.env.TURNSTILE_SECRET ||
       "1x0000000000000000000000000000000AA";
 
-    // 2b. Allow dev bypass or manual fallback verification tokens
+    // 2b. Dev-only bypass. Gated on NODE_ENV so a production deployment can
+    //     never be talked past the captcha by a caller who simply prefixes a
+    //     token. This branch previously ran unconditionally and was verified
+    //     exploitable on the live site: POST {"token":"dev-bypass-x"} returned
+    //     {"success":true}. The "cf-manual-passed-" prefix was removed
+    //     entirely -- there was never a legitimate reason for a client to
+    //     assert its own success.
     if (
-      token.startsWith("dev-bypass-") ||
-      token.startsWith("cf-manual-passed-")
+      process.env.NODE_ENV !== "production" &&
+      token.startsWith("dev-bypass-")
     ) {
       return NextResponse.json({
         success: true,
         action,
-        hostname: "barengyinyuk.my.id",
+        hostname: "localhost",
+        dev_bypass: true,
       });
     }
 

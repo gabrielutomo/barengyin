@@ -62,7 +62,6 @@ export async function POST(request: NextRequest) {
           name: `Dompet ${displayName}`,
           wallet_mode: "combined",
           created_by: user.id,
-          pin_hash: hashed,
         })
         .select("id")
         .single();
@@ -85,23 +84,31 @@ export async function POST(request: NextRequest) {
         type: "shared",
         current_balance: 0,
       });
-    } else {
-      // Update existing couple's pin_hash
-      const { error: updateErr } = await admin
-        .from("couples")
-        .update({ pin_hash: hashed })
-        .eq("id", coupleId);
-
-      if (updateErr) {
-        throw new Error(updateErr.message);
-      }
     }
 
-    // 4. Also sync profiles.pin_hash
-    await admin
-      .from("profiles")
-      .update({ pin_hash: hashed })
-      .eq("id", user.id);
+    // 4. Store the hash in the sealed tables only.
+    //    public.couples and public.profiles no longer carry pin_hash.
+    const { error: secretErr } = await admin
+      .from("couple_secrets")
+      .upsert(
+        { couple_id: coupleId, pin_hash: hashed, updated_at: new Date().toISOString() },
+        { onConflict: "couple_id" }
+      );
+
+    if (secretErr) {
+      throw new Error(secretErr.message);
+    }
+
+    const { error: profileSecretErr } = await admin
+      .from("profile_secrets")
+      .upsert(
+        { id: user.id, pin_hash: hashed, updated_at: new Date().toISOString() },
+        { onConflict: "id" }
+      );
+
+    if (profileSecretErr) {
+      throw new Error(profileSecretErr.message);
+    }
 
     return NextResponse.json({
       success: true,

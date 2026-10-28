@@ -18,8 +18,9 @@ export default function PasanganPage() {
     wallet_mode: string;
     default_split_ratio_a: number;
     default_split_ratio_b: number;
-    pin_hash?: string | null;
   } | null>(null);
+  // Server only ever returns a boolean about the PIN, never the hash.
+  const [pinConfigured, setPinConfigured] = useState(false);
   const [partner, setPartner] = useState<{ id: string; full_name: string; email?: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -69,10 +70,10 @@ export default function PasanganPage() {
 
       setCurrentUser({ id: user.id, email: user.email });
 
-      // 1. Profile
+      // 1. Profile (own row only)
       const { data: prof } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, full_name, avatar_url, theme_color, created_at")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -93,11 +94,12 @@ export default function PasanganPage() {
         const [
           { data: cRow },
           { data: pMembers },
-          { data: existingInvite }
+          { data: existingInvite },
+          { data: pinConfiguredNow },
         ] = await Promise.all([
           supabase
             .from("couples")
-            .select("*")
+            .select("id, name, wallet_mode, default_split_ratio_a, default_split_ratio_b, currency, created_by, created_at")
             .eq("id", activeCoupleId)
             .maybeSingle(),
           supabase
@@ -114,7 +116,13 @@ export default function PasanganPage() {
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle(),
+          // Whether a PIN exists is a boolean, never the hash itself.
+          supabase
+            .rpc("couple_pin_configured", { target_couple_id: activeCoupleId })
+            .then((res) => ({ data: res.data === true })),
         ]);
+
+        setPinConfigured(pinConfiguredNow === true);
 
         if (cRow) {
           let currentName = cRow.name;
@@ -129,12 +137,11 @@ export default function PasanganPage() {
 
         // Partner
         if (pMembers && pMembers.length > 0) {
-          const { data: pProf } = await supabase
-            .from("profiles")
-            .select("id, full_name")
-            .eq("id", pMembers[0].profile_id)
-            .maybeSingle();
-          if (pProf) setPartner(pProf);
+          const { data: memberProfiles } = await supabase.rpc("couple_member_profiles");
+          const pProf = (memberProfiles || []).find(
+            (row: { id: string }) => row.id === pMembers[0].profile_id
+          );
+          if (pProf) setPartner({ id: pProf.id, full_name: pProf.full_name });
         }
 
         // Generate or get active invite link
@@ -223,7 +230,7 @@ export default function PasanganPage() {
       }
 
       setSavedPinPlain(pinInput);
-      setCouple((prev) => (prev ? { ...prev, pin_hash: "configured" } : prev));
+      setPinConfigured(true);
       setShowPinForm(false);
       setPinInput("");
       setConfirmPinInput("");
@@ -419,9 +426,9 @@ export default function PasanganPage() {
                 </h2>
               </div>
               <span className={`font-label-badge text-xs uppercase font-black px-2.5 py-1 border-2 border-black rounded self-start sm:self-auto ${
-                couple?.pin_hash ? "bg-[#D4F34A] text-black" : "bg-[#FDE047] text-black"
+                pinConfigured ? "bg-[#D4F34A] text-black" : "bg-[#FDE047] text-black"
               }`}>
-                {couple?.pin_hash ? "✓ PIN Pasangan Aktif" : "⚠ Belum Diatur"}
+                {pinConfigured ? "✓ PIN Pasangan Aktif" : "⚠ Belum Diatur"}
               </span>
             </div>
 
@@ -435,7 +442,7 @@ export default function PasanganPage() {
               </div>
             )}
 
-            {couple?.pin_hash && !showPinForm ? (
+            {pinConfigured && !showPinForm ? (
               <div className="p-4 bg-[#f0fdf4] border-2 border-black rounded-lg space-y-3">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2 font-bold text-xs text-[#166534]">
@@ -469,7 +476,7 @@ export default function PasanganPage() {
               <form onSubmit={handleSaveCouplePin} className="p-5 bg-surface-container-low border-[3px] border-black rounded-lg space-y-4">
                 <div className="flex items-center gap-2 font-headline-sm uppercase font-black text-xs">
                   <span className="w-2.5 h-2.5 bg-secondary-container border border-black rounded-full" />
-                  <span>{couple?.pin_hash ? "Ubah 4-Digit PIN Pasangan:" : "Buat 4-Digit PIN Pasangan:"}</span>
+                  <span>{pinConfigured ? "Ubah 4-Digit PIN Pasangan:" : "Buat 4-Digit PIN Pasangan:"}</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -515,7 +522,7 @@ export default function PasanganPage() {
                     {isSavingPin ? "Menyimpan..." : "Simpan & Aktifkan PIN Pasangan"}
                   </button>
 
-                  {couple?.pin_hash && (
+                  {pinConfigured && (
                     <button
                       type="button"
                       onClick={() => setShowPinForm(false)}

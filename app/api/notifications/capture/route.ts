@@ -165,8 +165,24 @@ function parseNotification(pkg: string, title: string, text: string) {
 
 export async function POST(req: NextRequest) {
   try {
+    // 1. Authenticate the caller with an API key. Identity MUST come from the
+    //    key's owner, never from the request body: the previous version
+    //    trusted body.user_id, so any anonymous caller could write a
+    //    transaction into any user's account.
+    const apiKey =
+      req.headers.get("X-API-Key") ||
+      req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") ||
+      "";
+
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "API key tidak ditemukan." },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
-    const { user_id, package_name, title, text } = body;
+    const { package_name, title, text } = body;
 
     if (!text) {
       return NextResponse.json({ error: "Text notifikasi tidak boleh kosong" }, { status: 400 });
@@ -185,7 +201,9 @@ export async function POST(req: NextRequest) {
 
     // Initialize Supabase admin client to write transaction
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    // No anon-key fallback: an unprivileged client here would silently insert
+    // zero rows and look like a successful capture.
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json({ error: "Konfigurasi Supabase server tidak ditemukan" }, { status: 500 });
@@ -193,9 +211,24 @@ export async function POST(req: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // 2. Resolve the API key to its owning profile.
+    const { data: keyRow, error: keyErr } = await supabase
+      .from("user_api_keys")
+      .select("profile_id")
+      .eq("api_key", apiKey)
+      .maybeSingle();
+
+    if (keyErr || !keyRow) {
+      return NextResponse.json(
+        { error: "API key tidak valid." },
+        { status: 401 }
+      );
+    }
+
     const currentDate = new Date().toISOString().slice(0, 10);
     const newTx = {
-      created_by: user_id || null,
+      // Owner of the API key, NOT the client-supplied user_id.
+      created_by: keyRow.profile_id,
       title: parsed.title,
       amount: parsed.amount,
       type: parsed.type,

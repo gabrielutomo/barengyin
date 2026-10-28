@@ -120,7 +120,7 @@ export default function AnggaranPage() {
         // 1. Profile
         const { data: prof } = await supabase
           .from("profiles")
-          .select("*")
+          .select("id, full_name, avatar_url, theme_color, created_at")
           .eq("id", user.id)
           .maybeSingle();
 
@@ -157,11 +157,12 @@ export default function AnggaranPage() {
             .limit(1);
 
           if (pMembers && pMembers.length > 0) {
-            const { data: pProf } = await supabase
-              .from("profiles")
-              .select("id, full_name")
-              .eq("id", pMembers[0].profile_id)
-              .maybeSingle();
+            // Partner display data comes from the membership-scoped RPC.
+            // Direct profiles SELECT is restricted to auth.uid() = id.
+            const { data: memberProfiles } = await supabase.rpc("couple_member_profiles");
+            const pProf = (memberProfiles || []).find(
+              (row: { id: string }) => row.id === pMembers[0].profile_id
+            );
             if (pProf) setPartner(pProf);
           }
         }

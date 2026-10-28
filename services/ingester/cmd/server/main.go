@@ -23,6 +23,11 @@ func main() {
 	// 1. Load configuration
 	cfg := config.LoadConfig()
 
+	// Authentication is per-user: a request is accepted iff its API key exists
+	// in public.user_api_keys. There is no shared master credential, so no
+	// startup key check is needed here. The previous version refused to start
+	// without INGESTER_API_KEY, a value the request path no longer reads.
+
 	// 2. Initialize Redis Client
 	redisClient := cache.NewRedisClient(cfg.RedisAddr, cfg.RedisPass)
 
@@ -30,7 +35,7 @@ func main() {
 	dbClient := db.NewDBClient(cfg.DatabaseURL, cfg.SupabaseURL, cfg.SupabaseKey)
 
 	// 4. Setup HTTP Handlers
-	captureHandler := handler.NewCaptureHandler(cfg, redisClient, dbClient)
+	captureHandler := handler.NewCaptureHandler(redisClient, dbClient)
 
 	mux := http.NewServeMux()
 

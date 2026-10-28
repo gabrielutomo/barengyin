@@ -35,23 +35,63 @@ alter table public.savings_contributions add column if not exists contributor_na
 -- 4. RLS POLICIES FOR SAVINGS GOALS & CONTRIBUTIONS
 alter table public.savings_goals enable row level security;
 drop policy if exists "Savings goals access" on public.savings_goals;
-create policy "Savings goals access" on public.savings_goals for all
+drop policy if exists "savings goals scoped access" on savings_goals;
+create policy "savings goals scoped access" on public.savings_goals for all
 to authenticated
-using (true)
-with check (true);
+using (
+  (coalesce(scope, 'couple') = 'personal' and created_by = auth.uid())
+  or (coalesce(scope, 'couple') = 'couple' and couple_id in (
+    select couple_id from public.couple_members where profile_id = auth.uid()
+  ))
+)
+with check (
+  (coalesce(scope, 'couple') = 'personal' and created_by = auth.uid())
+  or (coalesce(scope, 'couple') = 'couple' and couple_id in (
+    select couple_id from public.couple_members where profile_id = auth.uid()
+  ))
+);
 
 alter table public.savings_contributions enable row level security;
 drop policy if exists "Savings contributions access" on public.savings_contributions;
-create policy "Savings contributions access" on public.savings_contributions for all
+drop policy if exists "savings contributions scoped access" on savings_contributions;
+create policy "savings contributions scoped access" on public.savings_contributions for all
 to authenticated
-using (true)
-with check (true);
+using (
+  profile_id = auth.uid()
+  or exists (
+    select 1 from public.savings_goals sg
+    where sg.id = savings_goal_id
+      and (
+        (coalesce(sg.scope, 'couple') = 'personal' and sg.created_by = auth.uid())
+        or (coalesce(sg.scope, 'couple') = 'couple' and sg.couple_id in (
+          select couple_id from public.couple_members where profile_id = auth.uid()
+        ))
+      )
+  )
+)
+with check (
+  profile_id = auth.uid()
+  or exists (
+    select 1 from public.savings_goals sg
+    where sg.id = savings_goal_id
+      and (
+        (coalesce(sg.scope, 'couple') = 'personal' and sg.created_by = auth.uid())
+        or (coalesce(sg.scope, 'couple') = 'couple' and sg.couple_id in (
+          select couple_id from public.couple_members where profile_id = auth.uid()
+        ))
+      )
+  )
+);
 
 -- 5. COUPLES TABLE
-alter table public.couples add column if not exists pin_hash text;
+-- pin_hash moved to public.couple_secrets. See
+-- supabase/migrations/20261028000000_security_hardening.sql — it creates the
+-- table, copies the data, then drops this column.
+-- alter table public.couples add column if not exists pin_hash text;  -- REMOVED
 
 -- 6. PROFILES TABLE
-alter table public.profiles add column if not exists pin_hash text;
+-- pin_hash moved to public.profile_secrets. Same migration.
+-- alter table public.profiles add column if not exists pin_hash text;  -- REMOVED
 
 -- ==========================================================
 -- 7. DUAL-SPACE (PERSONAL VS COUPLE) & AUTO-CAPTURE NOTIFICATION
@@ -82,9 +122,25 @@ create table if not exists public.user_api_keys (
 );
 
 alter table public.user_api_keys enable row level security;
+revoke all on public.user_api_keys from anon;
+grant select, insert, update, delete on public.user_api_keys to authenticated;
+
 drop policy if exists "Users can manage own api keys" on public.user_api_keys;
-create policy "Users can manage own api keys" on public.user_api_keys for all
+drop policy if exists "read own api keys" on public.user_api_keys;
+create policy "read own api keys" on public.user_api_keys for select
+to authenticated using (profile_id = auth.uid());
+
+drop policy if exists "insert own api keys" on public.user_api_keys;
+create policy "insert own api keys" on public.user_api_keys for insert
+to authenticated with check (profile_id = auth.uid());
+
+drop policy if exists "update own api keys" on public.user_api_keys;
+create policy "update own api keys" on public.user_api_keys for update
 to authenticated using (profile_id = auth.uid()) with check (profile_id = auth.uid());
+
+drop policy if exists "delete own api keys" on public.user_api_keys;
+create policy "delete own api keys" on public.user_api_keys for delete
+to authenticated using (profile_id = auth.uid());
 
 -- E. RLS POLICIES DUAL-SPACE (Isolasi data Personal vs Couple)
 drop policy if exists "Transactions access" on public.transactions;
@@ -150,6 +206,14 @@ with check (
 create index if not exists idx_tx_scope_created on public.transactions (scope, created_by, transaction_date desc);
 create index if not exists idx_tx_pending on public.transactions (created_by, status) where status = 'pending_review';
 
--- 8. RELOAD POSTGREST SCHEMA CACHE
+-- 8. REVOKE ANON TABLE PRIVILEGES
+-- Supabase grants anon full DML on public by default. That GRANT is what
+-- turned the leaky profiles SELECT policy into a full-table read for
+-- `apikey`-only requests. RLS must never be the only line of defence.
+revoke all on all tables in schema public from anon;
+revoke all on all sequences in schema public from anon;
+revoke all on all routines in schema public from anon;
+
+-- 9. RELOAD POSTGREST SCHEMA CACHE
 notify pgrst, 'reload schema';
 

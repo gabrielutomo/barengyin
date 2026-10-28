@@ -60,39 +60,31 @@ export default function InviteAcceptPage({
           });
         }
 
-        // 2. Fetch invite details
-        const { data: inviteRow, error: invErr } = await supabase
-          .from("couple_invites")
-          .select("*")
-          .eq("invite_token", token)
-          .maybeSingle();
+        // 2. Fetch invite details through the token-scoped RPC. The previous
+        // version read couple_invites and couples and profiles directly, which
+        // required world-readable policies; this returns only display fields.
+        const { data: inviteRows, error: invErr } = await supabase.rpc(
+          "get_couple_invite_by_token",
+          { token_value: token }
+        );
+
+        const inviteRow = Array.isArray(inviteRows) ? inviteRows[0] : inviteRows;
 
         if (invErr || !inviteRow) {
           setErrorMsg("Undangan tidak ditemukan atau tautan tidak valid.");
           return;
         }
 
-        let coupleName = "Dompet Bersama";
-        let inviterName = "Pasangan Kamu";
-
-        // Fetch couple name
-        const { data: coupleRow } = await supabase
-          .from("couples")
-          .select("name")
-          .eq("id", inviteRow.couple_id)
-          .maybeSingle();
-        if (coupleRow?.name) coupleName = coupleRow.name;
-
-        // Fetch inviter profile
-        const { data: profileRow } = await supabase
-          .from("profiles")
-          .select("full_name")
-          .eq("id", inviteRow.invited_by)
-          .maybeSingle();
-        if (profileRow?.full_name) inviterName = profileRow.full_name;
+        const coupleName = inviteRow.couple_name || "Dompet Bersama";
+        const inviterName = inviteRow.inviter_name || "Pasangan Kamu";
 
         setInvite({
-          ...inviteRow,
+          id: inviteRow.id,
+          couple_id: inviteRow.couple_id,
+          invite_token: token,
+          invited_by: inviteRow.invited_by,
+          status: inviteRow.status,
+          expires_at: inviteRow.expires_at,
           coupleName,
           inviterName,
         });

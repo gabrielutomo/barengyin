@@ -63,7 +63,7 @@ export default function PengaturanPage() {
         // 1. Profile
         const { data: prof } = await supabase
           .from("profiles")
-          .select("*")
+          .select("id, full_name, avatar_url, theme_color, created_at")
           .eq("id", user.id)
           .maybeSingle();
 
@@ -104,11 +104,12 @@ export default function PengaturanPage() {
             .limit(1);
 
           if (pMembers && pMembers.length > 0) {
-            const { data: pProf } = await supabase
-              .from("profiles")
-              .select("id, full_name")
-              .eq("id", pMembers[0].profile_id)
-              .maybeSingle();
+            // Partner display data comes from the membership-scoped RPC.
+            // Direct profiles SELECT is restricted to auth.uid() = id.
+            const { data: memberProfiles } = await supabase.rpc("couple_member_profiles");
+            const pProf = (memberProfiles || []).find(
+              (row: { id: string }) => row.id === pMembers[0].profile_id
+            );
             if (pProf) setPartner(pProf);
           }
         }
@@ -283,10 +284,17 @@ export default function PengaturanPage() {
     try {
       removePinVault();
       if (currentUser?.id) {
-        await supabase
-          .from("profiles")
-          .update({ pin_hash: null })
+        // Browser must not write to profiles.pin_hash — it no longer exists,
+        // and the vault lives in profile_secrets behind RLS. Deleting via the
+        // client is allowed by the "delete own profile secret" policy.
+        const { error: secretErr } = await supabase
+          .from("profile_secrets")
+          .delete()
           .eq("id", currentUser.id);
+
+        if (secretErr) {
+          console.warn("Could not delete profile secret:", secretErr);
+        }
       }
       setHasPinConfigured(false);
       setShowPinForm(false);
