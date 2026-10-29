@@ -15,10 +15,30 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Resolve secret key
+    // Cloudflare's "1x0000000000000000000000000000000AA" is an always-pass
+    // test secret. It is safe only against a local/dev Turnstile widget, so it
+    // is never used in production: a missing secret there would otherwise make
+    // every token verify and silently reduce this endpoint to a no-op.
     const secret =
-      process.env.TURNSTILE_SECRET_KEY ||
-      process.env.TURNSTILE_SECRET ||
-      "1x0000000000000000000000000000000AA";
+      process.env.TURNSTILE_SECRET_KEY || process.env.TURNSTILE_SECRET;
+
+    if (!secret) {
+      if (process.env.NODE_ENV === "production") {
+        console.error(
+          "[verify-turnstile] TURNSTILE_SECRET_KEY is not configured; refusing to verify."
+        );
+        return NextResponse.json(
+          { success: false, error: "Verifikasi Turnstile belum dikonfigurasi." },
+          { status: 500 }
+        );
+      }
+      return NextResponse.json({
+        success: true,
+        action,
+        hostname: "localhost",
+        dev_bypass: true,
+      });
+    }
 
     // 2b. Dev-only bypass. Gated on NODE_ENV so a production deployment can
     //     never be talked past the captcha by a caller who simply prefixes a
